@@ -1,0 +1,113 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Comments from '../../components/Comments.astro';
+import { supabase } from '../../lib/supabase';
+import { createSupabaseServerClient } from '../../lib/auth';
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/');
+
+const { data: post } = await supabase
+  .from('qm_posts')
+  .select('id,title,body,media_url,media_thumbnail_url,media_type,created_at,user_id')
+  .eq('id', id)
+  .maybeSingle();
+
+if (!post) return Astro.redirect('/');
+
+const { data: author } = await supabase
+  .from('profiles')
+  .select('display_name')
+  .eq('id', post.user_id)
+  .maybeSingle();
+
+// Fetch comments
+const { data: rawComments } = await supabase
+  .from('qm_comments')
+  .select('id,body,created_at,user_id')
+  .eq('post_id', id)
+  .order('created_at', { ascending: true });
+
+// Fetch profiles for commenters
+const userIds = [...new Set((rawComments ?? []).map((c) => c.user_id))];
+const profileMap: Record<string, string> = {};
+if (userIds.length > 0) {
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id,display_name')
+    .in('id', userIds);
+  if (profiles) for (const p of profiles) profileMap[p.id] = p.display_name;
+}
+
+const comments = (rawComments ?? []).map((c) => ({
+  ...c,
+  profiles: c.user_id && profileMap[c.user_id] ? { display_name: profileMap[c.user_id] } : null,
+}));
+
+const authClient = createSupabaseServerClient(Astro.cookies);
+const { data: { user } } = await authClient.auth.getUser();
+
+const authorName = author?.display_name ?? 'Anonymous';
+const dateStr = new Date(post.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Layout title={post.title + ' | Qaraye Merchants'}>
+  <div class="post-wrap">
+    <a href="/" class="back-link">Back to feed</a>
+
+    <article class="post-article">
+      <header>
+        <h1>{post.title}</h1>
+        <div class="post-meta">
+          <span>By <strong>{authorName}</strong></span>
+          <span class="dot"></span>
+          <time datetime={post.created_at}>{dateStr}</time>
+        </div>
+      </header>
+
+      {post.body && <p class="post-body">{post.body}</p>}
+
+      {post.media_type === 'image' && post.media_url && (
+        <figure class="post-media">
+          <img src={post.media_url} alt={post.title} />
+        </figure>
+      )}
+    </article>
+
+    <Comments postId={post.id} initialComments={comments} currentUserId={user?.id ?? null} />
+  </div>
+</Layout>
+
+<style>
+  .post-wrap { padding-top: 40px; padding-bottom: 80px; max-width: 780px; }
+  .back-link {
+    display: inline-block; font-family: var(--mono); font-size: 12px;
+    color: var(--ink-faint); text-decoration: none; margin-bottom: 24px;
+  }
+  .back-link:hover { color: var(--cyan); }
+  .post-article {
+    background: var(--bg-900); border: 1px solid var(--line-soft);
+    border-radius: var(--r-lg); padding: 32px;
+  }
+  .post-article h1 {
+    font-family: var(--display); font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700; line-height: 1.25; margin: 0 0 12px; color: var(--ink);
+  }
+  .post-meta {
+    display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+    margin-bottom: 24px;
+  }
+  .post-meta strong { color: var(--cyan); font-weight: 600; }
+  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-faint); }
+  .post-body {
+    font-size: 1.05rem; line-height: 1.7; color: var(--ink-muted);
+    white-space: pre-wrap; word-break: break-word; margin: 0 0 24px;
+  }
+  .post-media {
+    margin: 0; border-radius: var(--r-md); overflow: hidden;
+    background: var(--bg-950); border: 1px solid var(--line-soft);
+  }
+  .post-media img { display: block; width: 100%; height: auto; }
+  @media (max-width: 560px) { .post-article { padding: 22px 18px; } }
+</style>

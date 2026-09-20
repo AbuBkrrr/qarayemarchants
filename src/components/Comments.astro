@@ -1,0 +1,180 @@
+---
+interface Comment {
+  id: string;
+  body: string;
+  created_at: string;
+  user_id: string;
+  profiles: { display_name: string } | null;
+}
+
+interface Props {
+  postId: string;
+  initialComments: Comment[];
+  currentUserId: string | null;
+}
+
+const { postId, initialComments, currentUserId } = Astro.props;
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  });
+}
+---
+
+<section class="comments">
+  <div class="comments-head">
+    <h2>Comments <span class="count">{initialComments.length}</span></h2>
+  </div>
+
+  {initialComments.length === 0 ? (
+    <p class="no-comments">No comments yet. Be the first.</p>
+  ) : (
+    <ul class="comment-list">
+      {initialComments.map((c) => (
+        <li class="comment" data-comment-id={c.id}>
+          <div class="comment-head">
+            <strong>{c.profiles?.display_name ?? 'Anonymous'}</strong>
+            <span class="comment-date">{formatDate(c.created_at)}</span>
+            {currentUserId === c.user_id && (
+              <button class="comment-delete" data-comment-id={c.id} title="Delete comment">x</button>
+            )}
+          </div>
+          <p class="comment-body">{c.body}</p>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  {currentUserId ? (
+    <form class="comment-form" id="comment-form" data-post-id={postId}>
+      <textarea id="comment-body" placeholder="Share your thoughts..." maxlength="2000" required rows="3"></textarea>
+      <div class="comment-foot">
+        <span class="char-count"><span id="comment-count">0</span>/2000</span>
+        <button type="submit" class="btn btn-primary" id="comment-submit">Post Comment</button>
+      </div>
+      <p class="comment-error" id="comment-error" hidden></p>
+    </form>
+  ) : (
+    <p class="signin-note">
+      <a href={'/login?next=/post/' + postId}>Sign in</a> to leave a comment.
+    </p>
+  )}
+</section>
+
+<style>
+  .comments { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--line-soft); }
+  .comments-head { margin-bottom: 18px; }
+  .comments-head h2 {
+    font-family: var(--display); font-size: 1.2rem;
+    font-weight: 600; color: var(--ink); margin: 0;
+  }
+  .comments-head .count {
+    color: var(--cyan); font-family: var(--mono);
+    font-size: 0.9rem; margin-left: 4px;
+  }
+  .no-comments { color: var(--ink-muted); font-size: 0.9rem; margin: 0 0 24px; }
+  .comment-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 14px; }
+  .comment {
+    background: var(--bg-900); border: 1px solid var(--line-soft);
+    border-radius: var(--r-md); padding: 14px 16px;
+  }
+  .comment-head {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .comment-head strong { color: var(--ink); font-size: 0.92rem; font-weight: 600; }
+  .comment-date { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .comment-delete {
+    margin-left: auto; background: transparent; border: none;
+    color: var(--ink-faint); font-size: 16px; line-height: 1;
+    cursor: pointer; padding: 0 4px; font-family: var(--mono);
+  }
+  .comment-delete:hover { color: var(--red); }
+  .comment-body {
+    margin: 0; color: var(--ink-muted); font-size: 0.92rem;
+    line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+  }
+  .comment-form {
+    background: var(--bg-900); border: 1px solid var(--line);
+    border-radius: var(--r-md); padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .comment-form textarea {
+    width: 100%; background: var(--bg-850);
+    border: 1px solid var(--line-soft); border-radius: var(--r-sm);
+    color: var(--ink); font-family: var(--body); font-size: 14px;
+    line-height: 1.5; padding: 12px 14px; resize: vertical; min-height: 80px;
+  }
+  .comment-form textarea:focus { outline: none; border-color: var(--cyan); }
+  .comment-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .char-count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .comment-error { margin: 0; color: var(--red); font-size: 0.85rem; }
+  .signin-note {
+    color: var(--ink-muted); font-size: 0.9rem;
+    background: var(--bg-900); border: 1px dashed var(--line);
+    border-radius: var(--r-md); padding: 16px; text-align: center; margin: 0;
+  }
+</style>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  const form = document.getElementById('comment-form') as HTMLFormElement | null;
+  if (form) {
+    const postId = form.dataset.postId!;
+    const bodyField = document.getElementById('comment-body') as HTMLTextAreaElement;
+    const submitBtn = document.getElementById('comment-submit') as HTMLButtonElement;
+    const countEl = document.getElementById('comment-count')!;
+    const errorEl = document.getElementById('comment-error') as HTMLParagraphElement;
+
+    bodyField?.addEventListener('input', () => {
+      countEl.textContent = String(bodyField.value.length);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.hidden = true;
+
+      const body = bodyField.value.trim();
+      if (!body) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Posting...';
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        errorEl.textContent = 'You must be signed in to comment.';
+        errorEl.hidden = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Post Comment';
+        return;
+      }
+
+      const { error } = await supabase
+        .from('qm_comments')
+        .insert({ post_id: postId, user_id: user.id, body });
+
+      if (error) {
+        errorEl.textContent = error.message;
+        errorEl.hidden = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Post Comment';
+        return;
+      }
+
+      window.location.reload();
+    });
+  }
+
+  document.querySelectorAll('.comment-delete').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const el = e.currentTarget as HTMLButtonElement;
+      const commentId = el.dataset.commentId!;
+      if (!confirm('Delete this comment?')) return;
+      const { error } = await supabase.from('qm_comments').delete().eq('id', commentId);
+      if (error) { alert('Delete failed: ' + error.message); return; }
+      document.querySelector('[data-comment-id="' + commentId + '"]')?.remove();
+    });
+  });
+</script>

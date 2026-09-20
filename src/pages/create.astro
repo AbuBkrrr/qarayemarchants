@@ -1,0 +1,353 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../lib/auth';
+
+const authClient = createSupabaseServerClient(Astro.cookies);
+const { data: { user } } = await authClient.auth.getUser();
+
+if (!user) {
+  return Astro.redirect('/login?next=' + encodeURIComponent('/create'));
+}
+---
+
+<Layout title="Create Post | Qaraye Merchants">
+  <div class="create-wrap">
+
+    <a href="/" class="back-link">Back to feed</a>
+
+    <header class="create-header">
+      <h1>Create a post</h1>
+      <p>Share a short insight, listing, or question with the community.</p>
+    </header>
+
+    <div class="notice">
+      Media files are automatically deleted 30 days after posting to keep Qaraye Merchants fast.
+      Your text stays forever.
+    </div>
+
+    <form id="create-form" novalidate>
+
+      <div class="form-field">
+        <label for="title">Title</label>
+        <input type="text" id="title" required minlength="3" maxlength="200" placeholder="e.g. 2-bedroom duplex in Lekki" />
+        <span class="hint"><span id="title-count">0</span>/200</span>
+      </div>
+
+      <div class="form-field">
+        <label for="body">Description</label>
+        <textarea id="body" rows="5" maxlength="3000" placeholder="Add details..."></textarea>
+        <span class="hint"><span id="body-count">0</span>/3000</span>
+      </div>
+
+      <div class="form-field">
+        <label>Media (optional)</label>
+        <div class="segmented" id="media-seg">
+          <button type="button" data-type="none" class="active">No media</button>
+          <button type="button" data-type="image">Image</button>
+        </div>
+      </div>
+
+      <div class="form-field" id="file-field" hidden>
+        <label for="file">Choose an image</label>
+        <input type="file" id="file" accept="image/*" />
+        <span class="hint">Max 15 MB. Auto-compressed to under 150 KB WebP.</span>
+      </div>
+
+      <div class="preview" id="preview" hidden>
+        <div class="preview-label">Preview</div>
+        <div class="preview-body" id="preview-body"></div>
+        <div class="preview-stats" id="preview-stats"></div>
+      </div>
+
+      <div class="progress" id="progress" hidden>
+        <div class="progress-label" id="progress-label">Working...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+
+      <p class="form-error" id="form-error" hidden></p>
+
+      <div class="actions">
+        <a href="/" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Publish</button>
+      </div>
+
+    </form>
+  </div>
+</Layout>
+
+<style>
+  .create-wrap { padding-top: 40px; padding-bottom: 80px; max-width: 640px; }
+  .back-link {
+    display: inline-block; font-family: var(--mono); font-size: 12px;
+    color: var(--ink-faint); text-decoration: none; margin-bottom: 20px;
+  }
+  .back-link:hover { color: var(--cyan); }
+  .create-header { margin-bottom: 22px; }
+  .create-header h1 {
+    font-family: var(--display); font-size: 1.75rem;
+    font-weight: 700; color: var(--ink); margin: 0 0 6px;
+  }
+  .create-header p { color: var(--ink-muted); margin: 0; font-size: 0.95rem; }
+  .notice {
+    background: rgba(0, 229, 255, 0.06); border: 1px solid var(--line);
+    border-radius: var(--r-md); padding: 14px 16px;
+    font-size: 0.88rem; color: var(--ink-muted); margin-bottom: 22px;
+    line-height: 1.55;
+  }
+  .form-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .form-field label {
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-muted);
+  }
+  .form-field input[type="text"],
+  .form-field textarea {
+    background: var(--bg-900); border: 1px solid var(--line-soft);
+    border-radius: var(--r-sm); color: var(--ink);
+    font-family: var(--body); font-size: 15px; padding: 12px 14px;
+    transition: border-color 0.15s; resize: vertical;
+  }
+  .form-field input[type="text"]:focus,
+  .form-field textarea:focus { outline: none; border-color: var(--cyan); }
+  .form-field input::placeholder,
+  .form-field textarea::placeholder { color: var(--ink-faint); }
+  .hint { font-size: 0.75rem; color: var(--ink-faint); font-family: var(--mono); }
+  .segmented {
+    display: flex; border: 1px solid var(--line-soft);
+    border-radius: var(--r-md); overflow: hidden; background: var(--bg-900);
+  }
+  .segmented button {
+    flex: 1; background: transparent; border: none;
+    color: var(--ink-muted); font-family: var(--body);
+    font-size: 13px; font-weight: 500; padding: 12px 8px;
+    cursor: pointer; transition: 0.15s;
+    border-right: 1px solid var(--line-soft);
+  }
+  .segmented button:last-child { border-right: none; }
+  .segmented button.active {
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: #05070f; font-weight: 600;
+  }
+  .form-field input[type="file"] {
+    background: var(--bg-900); border: 1px dashed var(--line);
+    border-radius: var(--r-md); padding: 14px;
+    color: var(--ink-muted); font-family: var(--body); font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .form-field input[type="file"]:hover { border-color: var(--cyan); }
+  .preview {
+    background: var(--bg-900); border: 1px solid var(--line-soft);
+    border-radius: var(--r-md); padding: 16px; margin-bottom: 20px;
+  }
+  .preview-label {
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 12px;
+  }
+  .preview-body { border-radius: var(--r-sm); overflow: hidden; background: var(--bg-950); margin-bottom: 12px; }
+  .preview-body img { display: block; width: 100%; max-height: 300px; object-fit: contain; }
+  .preview-stats {
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .preview-stats .stat-row { display: flex; justify-content: space-between; }
+  .preview-stats .stat-row span:last-child { color: var(--cyan); font-weight: 600; }
+  .progress {
+    background: var(--bg-900); border: 1px solid var(--line);
+    border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 20px;
+  }
+  .progress-label { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 10px; }
+  .progress-bar { height: 6px; background: var(--bg-850); border-radius: 3px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    transition: width 0.2s ease;
+  }
+  .form-error {
+    color: var(--red); background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--r-sm); padding: 12px 14px;
+    font-size: 0.88rem; margin: 0 0 20px;
+  }
+  .actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+  .actions .btn { padding: 12px 24px; }
+  .actions .btn-primary:disabled { opacity: 0.5; cursor: wait; }
+  @media (max-width: 560px) {
+    .actions { flex-direction: column-reverse; }
+    .actions .btn { width: 100%; justify-content: center; }
+  }
+</style>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  const form = document.getElementById('create-form') as HTMLFormElement;
+  const titleInput = document.getElementById('title') as HTMLInputElement;
+  const bodyInput = document.getElementById('body') as HTMLTextAreaElement;
+  const mediaSeg = document.getElementById('media-seg') as HTMLDivElement;
+  const fileField = document.getElementById('file-field') as HTMLDivElement;
+  const fileInput = document.getElementById('file') as HTMLInputElement;
+  const preview = document.getElementById('preview') as HTMLDivElement;
+  const previewBody = document.getElementById('preview-body') as HTMLDivElement;
+  const previewStats = document.getElementById('preview-stats') as HTMLDivElement;
+  const progress = document.getElementById('progress') as HTMLDivElement;
+  const progressLabel = document.getElementById('progress-label') as HTMLDivElement;
+  const progressFill = document.getElementById('progress-fill') as HTMLDivElement;
+  const errorEl = document.getElementById('form-error') as HTMLParagraphElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const titleCount = document.getElementById('title-count') as HTMLSpanElement;
+  const bodyCount = document.getElementById('body-count') as HTMLSpanElement;
+
+  let mediaType: 'none' | 'image' = 'none';
+  let selectedFile: File | null = null;
+
+  function bytesToKB(b: number) { return (b / 1024).toFixed(1); }
+
+  titleInput?.addEventListener('input', () => { titleCount.textContent = String(titleInput.value.length); });
+  bodyInput?.addEventListener('input', () => { bodyCount.textContent = String(bodyInput.value.length); });
+
+  mediaSeg?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('button');
+    if (!btn) return;
+    mediaType = btn.dataset.type as 'none' | 'image';
+    mediaSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
+    fileField.hidden = mediaType !== 'image';
+    preview.hidden = true;
+    selectedFile = null;
+    fileInput.value = '';
+  });
+
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0] ?? null;
+    selectedFile = file;
+    preview.hidden = true;
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      errorEl.textContent = 'Image must be under 15 MB.';
+      errorEl.hidden = false;
+      selectedFile = null;
+      fileInput.value = '';
+      return;
+    }
+    errorEl.hidden = true;
+    const url = URL.createObjectURL(file);
+    previewBody.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Preview';
+    previewBody.appendChild(img);
+    previewStats.innerHTML = '<div class="stat-row"><span>Original size</span><span>' + bytesToKB(file.size) + ' KB</span></div>';
+    preview.hidden = false;
+  });
+
+  function setProgress(label: string, pct: number) {
+    progress.hidden = false;
+    progressLabel.textContent = label;
+    progressFill.style.width = pct + '%';
+  }
+
+  async function uploadFile(path: string, file: File | Blob, contentType: string): Promise<string> {
+    const { data, error } = await supabase.storage.from('qm-media').upload(path, file, {
+      cacheControl: '31536000',
+      contentType,
+      upsert: false,
+    });
+    if (error) throw new Error(error.message);
+    const { data: urlData } = supabase.storage.from('qm-media').getPublicUrl(data.path);
+    return urlData.publicUrl;
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    progress.hidden = true;
+
+    const title = titleInput.value.trim();
+    const body = bodyInput.value.trim();
+
+    if (title.length < 3) {
+      errorEl.textContent = 'Title must be at least 3 characters.';
+      errorEl.hidden = false;
+      titleInput.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Publishing...';
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Session expired. Sign in again.');
+
+      let mediaUrl: string | null = null;
+      let mediaThumbUrl: string | null = null;
+      let finalMediaType: 'none' | 'image' = 'none';
+
+      if (mediaType === 'image' && selectedFile) {
+        setProgress('Compressing image...', 20);
+        const imageCompression = (await import('browser-image-compression')).default;
+
+        const fullBlob = await imageCompression(selectedFile, {
+          maxSizeMB: 0.15,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: 'image/webp',
+          initialQuality: 0.75,
+        });
+
+        setProgress('Generating thumbnail...', 45);
+
+        const thumbBlob = await imageCompression(selectedFile, {
+          maxSizeMB: 0.015,
+          maxWidthOrHeight: 240,
+          useWebWorker: true,
+          fileType: 'image/webp',
+          initialQuality: 0.6,
+        });
+
+        previewStats.innerHTML =
+          '<div class="stat-row"><span>Original</span><span>' + bytesToKB(selectedFile.size) + ' KB</span></div>' +
+          '<div class="stat-row"><span>Full WebP</span><span>' + bytesToKB(fullBlob.size) + ' KB</span></div>' +
+          '<div class="stat-row"><span>Thumbnail</span><span>' + bytesToKB(thumbBlob.size) + ' KB</span></div>';
+        preview.hidden = false;
+
+        setProgress('Uploading full image...', 65);
+        const ts = Date.now();
+        const base = user.id + '/' + ts;
+        mediaUrl = await uploadFile(base + '-full.webp', fullBlob, 'image/webp');
+
+        setProgress('Uploading thumbnail...', 85);
+        mediaThumbUrl = await uploadFile(base + '-thumb.webp', thumbBlob, 'image/webp');
+
+        finalMediaType = 'image';
+      }
+
+      setProgress('Saving post...', 95);
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('qm_posts')
+        .insert({
+          user_id: user.id,
+          title: title,
+          body: body || null,
+          media_url: mediaUrl,
+          media_thumbnail_url: mediaThumbUrl,
+          media_type: finalMediaType,
+          status: 'published',
+          published_at: new Date().toISOString(),
+          language: 'en',
+        })
+        .select('id')
+        .single();
+
+      if (insertError) throw new Error(insertError.message);
+
+      setProgress('Done!', 100);
+      window.location.href = '/post/' + inserted.id;
+    } catch (err) {
+      progress.hidden = true;
+      errorEl.textContent = (err as Error).message;
+      errorEl.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Publish';
+    }
+  });
+</script>
