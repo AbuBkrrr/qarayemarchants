@@ -1,0 +1,526 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="container">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="live-dot"></span>
+        <span data-i18n="trending">Trending</span>
+      </div>
+      <h1>
+        <span data-i18n="appName">Qaraye Merchants</span>
+        <span class="hero-accent">.</span>
+      </h1>
+      <p class="hero-tagline" data-i18n="tagline">The pulse of Nigerian finance</p>
+      <p class="hero-sub" data-i18n="subtitle">Read today's financial news, share your own insights, and discuss what matters with the community.</p>
+    </section>
+
+    <!-- TABS -->
+    <nav class="feed-tabs" aria-label="Feed filters">
+      <button class="tab active" data-tab="all">
+        <span data-i18n="tabAll">All</span>
+      </button>
+      <button class="tab" data-tab="community">
+        <span data-i18n="tabCommunity">Community</span>
+      </button>
+      <button class="tab" data-tab="news">
+        <span data-i18n="tabNews">News</span>
+      </button>
+    </nav>
+
+    <!-- FEED -->
+    <section class="feed" id="feed">
+
+      <!-- Card 1: Community post with image -->
+      <article class="card card-community">
+        <div class="card-media">
+          <img
+            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80"
+            alt="Modern duplex"
+            loading="lazy"
+          />
+          <span class="card-badge badge-community">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <span data-i18n="tabCommunity">Community</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <h3>A posh 2-bedroom duplex at an affordable price in Lekki</h3>
+          <p>Just listed — 110 sqm, fitted kitchen, solar-ready, in a gated estate with 24/7 power. DM for inspection.</p>
+          <div class="card-meta">
+            <span class="meta-author">by <b>Tunde A.</b></span>
+            <span class="meta-dot"></span>
+            <span class="meta-time">12m ago</span>
+            <span class="meta-spacer"></span>
+            <span class="meta-stat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              24
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2: News -->
+      <article class="card card-news">
+        <div class="card-media card-media-tall">
+          <div class="news-gradient"></div>
+          <span class="card-badge badge-news">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+            <span data-i18n="tabNews">News</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <h3>CBN raises MPR to 27.5% — what it means for mortgage rates</h3>
+          <p>The Monetary Policy Committee's latest decision pushes borrowing costs higher. We break down what this means for homebuyers and business loans.</p>
+          <div class="card-meta">
+            <span class="meta-source">Nairametrics</span>
+            <span class="meta-dot"></span>
+            <span class="meta-time">1h ago</span>
+            <span class="meta-spacer"></span>
+            <span class="meta-stat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              48
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3: Community post text -->
+      <article class="card card-community">
+        <div class="card-body">
+          <h3>How I saved ₦500k in 6 months on a ₦180k/month salary</h3>
+          <p>The trick was automating 30% into a money-market fund on payday, and treating the rest as "spent." Here's the exact breakdown...</p>
+          <div class="card-meta">
+            <span class="meta-author">by <b>Amaka O.</b></span>
+            <span class="meta-dot"></span>
+            <span class="meta-time">3h ago</span>
+            <span class="meta-spacer"></span>
+            <span class="meta-stat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              112
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 4: News -->
+      <article class="card card-news">
+        <div class="card-media card-media-tall">
+          <div class="news-gradient news-gradient-2"></div>
+          <span class="card-badge badge-news">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+            <span data-i18n="tabNews">News</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <h3>Lagos land registry goes fully digital — what property buyers need to know</h3>
+          <p>The new e-registry promises faster title searches and fewer fraud cases. Here's how it changes the buying process.</p>
+          <div class="card-meta">
+            <span class="meta-source">BusinessDay</span>
+            <span class="meta-dot"></span>
+            <span class="meta-time">5h ago</span>
+            <span class="meta-spacer"></span>
+            <span class="meta-stat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              76
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 5: Community post -->
+      <article class="card card-community">
+        <div class="card-body">
+          <h3>Solar installer recommendation in Abuja (verified)</h3>
+          <p>After 3 quotes and 2 bad experiences, I finally found a team that delivered on time. Sharing for anyone looking at 5-10kW systems.</p>
+          <div class="card-meta">
+            <span class="meta-author">by <b>Ibrahim K.</b></span>
+            <span class="meta-dot"></span>
+            <span class="meta-time">8h ago</span>
+            <span class="meta-spacer"></span>
+            <span class="meta-stat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              19
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 6: News -->
+      <article class="card card-news">
+        <div class="card-media card-media-tall">
+          <div class="news-gradient news-gradient-3"></div>
+          <span class="card-badge badge-news">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+            <span data-i18n="tabNews">News</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <h3>Diaspora remittances hit $20.5bn in 2025 — highest in 5 years</h3>
+          <p>Nigerians abroad sent more money home than any year since 2020, according to CBN data. We look at what's driving the surge.</p>
+          <div class="card-meta">
+            <span class="meta-source">TechCabal</span>
+            <span class="meta-dot"></span>
+            <span class="meta-time">1d ago</span>
+            <span class="meta-spacer"></span>
+            <span class="meta-stat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              31
+            </span>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- NEWSLETTER -->
+    <section class="newsletter">
+      <div class="newsletter-inner">
+        <div>
+          <h3 data-i18n="subscribeTitle">Get daily Nigerian finance insights</h3>
+          <p data-i18n="subscribeSubtitle">Short, practical, no spam. Unsubscribe anytime.</p>
+        </div>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed!')">
+          <input type="text" data-i18n-placeholder="subscribePlaceholder" placeholder="you@example.com or phone" />
+          <button type="submit" class="btn btn-primary" data-i18n="subscribeButton">Subscribe</button>
+        </form>
+      </div>
+    </section>
+
+  </div>
+</Layout>
+
+<style>
+  .hero {
+    padding: 60px 0 40px;
+    text-align: center;
+    position: relative;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--cyan);
+    background: var(--cyan-soft);
+    border: 1px solid var(--line);
+    padding: 6px 14px;
+    border-radius: var(--r-full);
+    margin-bottom: 20px;
+  }
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(34px, 6vw, 60px);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin: 0 0 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #a5b0d5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-accent {
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-tagline {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 16px;
+  }
+  .hero-sub {
+    color: var(--ink-muted);
+    font-size: 16px;
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Tabs */
+  .feed-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 40px 0 32px;
+    background: var(--bg-900);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-full);
+    padding: 6px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    padding: 9px 22px;
+    border-radius: var(--r-full);
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: #05070f;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  }
+
+  /* Feed */
+  .feed {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 80px;
+  }
+
+  .card {
+    background: var(--bg-900);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: 0.2s;
+  }
+  .card:hover {
+    border-color: var(--line);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 229, 255, 0.08);
+  }
+
+  .card-media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: var(--bg-850);
+    overflow: hidden;
+  }
+  .card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .card-media-tall { aspect-ratio: 16 / 7; }
+
+  .news-gradient {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0f1d 0%, #1c2540 50%, #0891a8 100%);
+  }
+  .news-gradient-2 {
+    background: linear-gradient(135deg, #0a0f1d 0%, #2d1b4e 50%, #8b5cf6 100%);
+  }
+  .news-gradient-3 {
+    background: linear-gradient(135deg, #0a0f1d 0%, #4a1c3d 50%, #ec4899 100%);
+  }
+
+  .card-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 5px 10px;
+    border-radius: var(--r-full);
+    backdrop-filter: blur(10px);
+  }
+  .badge-community {
+    background: rgba(0, 229, 255, 0.2);
+    color: var(--cyan);
+    border: 1px solid rgba(0, 229, 255, 0.4);
+  }
+  .badge-news {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--violet);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+  }
+
+  .card-body {
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 10px;
+  }
+  .card-body h3 {
+    font-family: var(--display);
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+  .card-body p {
+    color: var(--ink-muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 14px;
+    margin-top: auto;
+    border-top: 1px solid var(--line-soft);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  .meta-author b {
+    color: var(--ink-muted);
+    font-weight: 600;
+  }
+  .meta-source {
+    color: var(--violet);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 10px;
+  }
+  .meta-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+  .meta-spacer { flex: 1; }
+  .meta-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--ink-muted);
+  }
+  .meta-stat svg { width: 13px; height: 13px; }
+
+  /* Newsletter */
+  .newsletter {
+    background: linear-gradient(135deg, var(--bg-900) 0%, var(--bg-850) 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    padding: 32px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .newsletter::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .newsletter-inner {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .newsletter h3 {
+    font-family: var(--display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+  .newsletter p {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+  .newsletter-form {
+    display: flex;
+    gap: 10px;
+    flex: 1 1 360px;
+    max-width: 480px;
+  }
+  .newsletter-form input {
+    flex: 1;
+    background: var(--bg-800);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-full);
+    padding: 12px 20px;
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 14px;
+  }
+  .newsletter-form input:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
+  }
+
+  @media (max-width: 1000px) {
+    .feed { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .feed { grid-template-columns: 1fr; }
+    .hero { padding: 40px 0 24px; }
+    .newsletter { padding: 22px 18px; }
+  }
+</style>
+
+<script>
+  // Tab filtering (client-side placeholder — real data comes in Phase 2)
+  document.querySelectorAll('.tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const which = tab.getAttribute('data-tab');
+      document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.card').forEach((card) => {
+        if (which === 'all') {
+          card.style.display = '';
+        } else if (which === 'community') {
+          card.style.display = card.classList.contains('card-community') ? '' : 'none';
+        } else if (which === 'news') {
+          card.style.display = card.classList.contains('card-news') ? '' : 'none';
+        }
+      });
+    });
+  });
+</script>

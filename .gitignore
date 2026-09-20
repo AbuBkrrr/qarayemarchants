@@ -1,0 +1,28 @@
+﻿# Dependencies
+node_modules/
+
+# Astro build output
+dist/
+.astro/
+
+# Vercel
+.vercel/
+
+# Environment — NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+.vercel

@@ -1,0 +1,437 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Qaraye Merchants — The pulse of Nigerian finance',
+  description = 'Read today\u2019s Nigerian financial news, share your insights, and discuss what matters with the community.',
+} = Astro.props;
+
+const year = new Date().getFullYear();
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <style is:global>
+    :root {
+      /* Base palette */
+      --bg-950: #05070f;
+      --bg-900: #0a0f1d;
+      --bg-850: #0f1526;
+      --bg-800: #141b30;
+      --bg-700: #1c2540;
+
+      /* Accents — futuristic */
+      --cyan: #00e5ff;
+      --cyan-soft: rgba(0, 229, 255, 0.12);
+      --cyan-dim: #0891a8;
+      --violet: #8b5cf6;
+      --violet-soft: rgba(139, 92, 246, 0.12);
+      --pink: #ec4899;
+      --green: #10d982;
+      --amber: #f59e0b;
+      --red: #ef4444;
+
+      /* Text */
+      --ink: #f0f4ff;
+      --ink-muted: #8b95b8;
+      --ink-faint: #5a6485;
+
+      /* Lines */
+      --line: rgba(0, 229, 255, 0.16);
+      --line-soft: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(0, 229, 255, 0.32);
+
+      /* Fonts */
+      --display: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+
+      /* Radii */
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 18px;
+      --r-xl: 24px;
+      --r-full: 999px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-950);
+      color: var(--ink);
+      font-family: var(--body);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.04) 0 1px, transparent 1px 48px),
+        repeating-linear-gradient(90deg, rgba(0, 229, 255, 0.04) 0 1px, transparent 1px 48px);
+      pointer-events: none;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+    }
+
+    /* Glowing orbs */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { opacity: 0.85; }
+    img { max-width: 100%; height: auto; display: block; }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ============ NAV ============ */
+    .global-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5, 7, 15, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .gn-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 14px 24px;
+    }
+    .gn-logo {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .gn-logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #05070f;
+      font-weight: 900;
+      font-size: 16px;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+    }
+    .gn-logo-text span { color: var(--cyan); }
+
+    .gn-links {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .gn-links::-webkit-scrollbar { display: none; }
+    .gn-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      padding: 8px 14px;
+      border-radius: var(--r-full);
+      border: 1px solid transparent;
+      transition: 0.15s;
+    }
+    .gn-link:hover {
+      color: var(--ink);
+      background: var(--bg-850);
+      opacity: 1;
+    }
+    .gn-link.active {
+      color: var(--cyan);
+      background: var(--cyan-soft);
+      border-color: var(--line);
+    }
+
+    .gn-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Language switcher */
+    .lang-switcher { position: relative; }
+    .lang-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-850);
+      border: 1px solid var(--line-soft);
+      color: var(--ink-muted);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: var(--r-full);
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .lang-btn:hover {
+      color: var(--ink);
+      border-color: var(--line);
+    }
+    .lang-btn svg { width: 14px; height: 14px; }
+
+    .lang-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 180px;
+      background: var(--bg-900);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 229, 255, 0.1);
+      padding: 6px;
+      display: none;
+      z-index: 200;
+    }
+    .lang-dropdown.open { display: block; }
+    .lang-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      font-family: var(--body);
+      font-size: 13.5px;
+      color: var(--ink-muted);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: 0.12s;
+    }
+    .lang-option:hover {
+      background: var(--bg-850);
+      color: var(--ink);
+    }
+    .lang-option.active {
+      color: var(--cyan);
+      background: var(--cyan-soft);
+    }
+    .lang-option-code {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      letter-spacing: 0.08em;
+    }
+    .lang-option.active .lang-option-code { color: var(--cyan); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--body);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: var(--r-full);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      color: #05070f;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+    }
+    .btn-primary:hover {
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.45);
+    }
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--line);
+      color: var(--ink-muted);
+    }
+    .btn-ghost:hover {
+      color: var(--ink);
+      border-color: var(--cyan);
+      background: var(--cyan-soft);
+      opacity: 1;
+    }
+
+    /* ============ FOOTER ============ */
+    .site-footer {
+      border-top: 1px solid var(--line-soft);
+      padding: 40px 0 30px;
+      margin-top: 80px;
+      position: relative;
+      z-index: 1;
+    }
+    .site-footer .footer-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--ink-muted);
+      font-size: 0.85rem;
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .footer-links a { color: var(--ink-muted); }
+    .footer-links a:hover { color: var(--cyan); }
+
+    @media (max-width: 900px) {
+      .gn-links .gn-text { display: none; }
+      .gn-link { padding: 8px 10px; }
+      .gn-logo-text { display: none; }
+      .gn-inner { gap: 12px; padding: 12px 16px; }
+    }
+    @media (max-width: 640px) {
+      .gn-actions .btn span { display: none; }
+      .gn-actions .btn { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="global-nav">
+    <div class="gn-inner">
+      <a href="/" class="gn-logo">
+        <span class="gn-logo-mark">Q</span>
+        <span class="gn-logo-text">QARAYE<span>M</span></span>
+      </a>
+
+      <nav class="gn-links" aria-label="Primary">
+        <a href="/" class="gn-link active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><line x1="18" y1="14" x2="12" y2="14"/><line x1="18" y1="18" x2="12" y2="18"/><line x1="18" y1="10" x2="12" y2="10"/></svg>
+          <span class="gn-text" data-i18n="tabNews">News</span>
+        </a>
+        <a href="/trending" class="gn-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span class="gn-text" data-i18n="trending">Trending</span>
+        </a>
+        <a href="/community" class="gn-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="gn-text" data-i18n="tabCommunity">Community</span>
+        </a>
+      </nav>
+
+      <div class="gn-actions">
+        <div class="lang-switcher">
+          <button class="lang-btn" id="lang-btn" aria-label="Change language">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span id="lang-label">English</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="lang-dropdown" id="lang-dropdown">
+            <div class="lang-option" data-lang-option="en">
+              <span>English</span>
+              <span class="lang-option-code">EN</span>
+            </div>
+            <div class="lang-option" data-lang-option="ha">
+              <span>Hausa</span>
+              <span class="lang-option-code">HA</span>
+            </div>
+            <div class="lang-option" data-lang-option="yo">
+              <span>Yorùbá</span>
+              <span class="lang-option-code">YO</span>
+            </div>
+            <div class="lang-option" data-lang-option="ig">
+              <span>Igbo</span>
+              <span class="lang-option-code">IG</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="/login" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span data-i18n="signIn">Sign In</span>
+        </a>
+        <a href="/create" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span data-i18n="createPost">Create Post</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <slot />
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>&copy; {year} <a href="/">Qaraye Merchants</a></div>
+      <div class="footer-links">
+        <a href="/about" data-i18n="footerAbout">About</a>
+        <a href="/privacy" data-i18n="footerPrivacy">Privacy</a>
+        <a href="/terms" data-i18n="footerTerms">Terms</a>
+        <a href="/contact" data-i18n="footerContact">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    import '../scripts/i18n-widget.ts';
+  </script>
+</body>
+</html>
