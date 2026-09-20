@@ -1,5 +1,5 @@
 {
-  "name": "qarayemerchants",
+  "name": "QarayeMarchants",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -18,13 +18,15 @@
     "@supabase/supabase-js": "^2.116.0",
     "astro": "^7.3.3",
     "browser-image-compression": "^2.0.2",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "turndown": "^7.2.4"
   },
   "allowScripts": {
     "esbuild": true
   },
   "devDependencies": {
-    "@types/node": "^26.6.2"
+    "@types/node": "^26.6.2",
+    "dotenv": "^18.0.1"
   },
   "overrides": {
     "path-to-regexp": "^6.3.0"

@@ -51,7 +51,7 @@ const authorName = author?.display_name ?? 'Anonymous';
 const dateStr = new Date(post.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
 
-<Layout title={post.title + ' | Qaraye Merchants'}>
+<Layout title={post.title + ' | Qaraye Marchants'}>
   <div class="post-wrap">
     <a href="/" class="back-link">Back to feed</a>
 
@@ -81,10 +81,10 @@ const dateStr = new Date(post.created_at).toLocaleDateString('en-GB', { year: 'n
           </svg>
         </div>
         <div class="contact-text">
-          <h3>Contact Qaraye Merchants to complete your purchases</h3>
+          <h3>Contact Qaraye Marchants to complete your purchases</h3>
           <p>Reach out directly to finalise this listing, negotiate terms, or arrange payment and delivery.</p>
         </div>
-        <a href="https://wa.me/2348037411688?text=Hi%20Qaraye%20Merchants%2C%20I%20am%20interested%20in%20your%20listing%3A%20{encodeURIComponent(post.title)}" target="_blank" rel="noopener" class="btn btn-primary contact-btn">
+        <a href="https://wa.me/2348037411688?text=Hi%20Qaraye%20Marchants%2C%20I%20am%20interested%20in%20your%20listing%3A%20{encodeURIComponent(post.title)}" target="_blank" rel="noopener" class="btn btn-primary contact-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
           </svg>

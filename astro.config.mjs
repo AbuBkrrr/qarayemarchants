@@ -4,7 +4,7 @@ import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'http://localhost:4321',
+ site: 'https://qarayemerchants.com.ng',
   output: 'server',
   adapter: vercel(),
   integrations: [sitemap()],

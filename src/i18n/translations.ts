@@ -14,7 +14,7 @@ export const languages: { code: LanguageCode; name: string; nativeName: string }
 
 export const translations: Record<LanguageCode, Record<string, string>> = {
   en: {
-    appName: 'Qaraye Merchants',
+    appName: 'Qaraye Marchants',
     tagline: 'The pulse of Nigerian finance',
     subtitle: 'Read today\'s financial news, share your own insights, and discuss what matters with the community.',
     createPost: 'Create Post',
@@ -50,7 +50,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     justNow: 'just now',
   },
   ha: {
-    appName: 'Qaraye Merchants',
+    appName: 'Qaraye Marchants',
     tagline: 'Zuciyar harkar kuɗi ta Najeriya',
     subtitle: 'Karanta labaran kuɗi na yau, raba tunaninka, kuma tattauna da al\'umma.',
     createPost: 'Ƙirƙiri Rubutu',
@@ -86,7 +86,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     justNow: 'yanzu',
   },
   yo: {
-    appName: 'Qaraye Merchants',
+    appName: 'Qaraye Marchants',
     tagline: 'Ọkàn ti ìnáwó Nàìjíríà',
     subtitle: 'Ka àwọn ìròyìn ìnáwó ti òní, pín èrò rẹ, kí o sì jíròrò pẹ̀lú àwùjọ.',
     createPost: 'Ṣẹ̀dá Àpilẹ̀kọ',
@@ -122,7 +122,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     justNow: 'báyìí',
   },
   ig: {
-    appName: 'Qaraye Merchants',
+    appName: 'Qaraye Marchants',
     tagline: 'Obi nke ego Naịjirịa',
     subtitle: 'Gụọ akụkọ ego taa, kesaa echiche gị, soro ndị ọzọ kparịta ụka.',
     createPost: 'Mepụta Post',
