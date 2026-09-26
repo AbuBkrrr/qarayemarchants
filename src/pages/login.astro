@@ -121,6 +121,7 @@ import Layout from '../layouts/Layout.astro';
     if (data.user) {
       await supabase.from('profiles').upsert({
         id: data.user.id,
+        display_name: 'Merchant',
         phone: digits,
         whatsapp: digits.replace(/^0/, '234')
       });

@@ -325,9 +325,11 @@ import Layout from '../../layouts/Layout.astro';
     }
 
     const formData = new FormData(form);
+    const businessName = formData.get('business_name') as string;
     const payload: Record<string, unknown> = {
       id: currentUserId,
-      business_name: formData.get('business_name'),
+      business_name: businessName,
+      display_name: businessName || 'Merchant',
       owner_name: formData.get('owner_name'),
       phone: formData.get('phone'),
       whatsapp: formData.get('whatsapp'),
