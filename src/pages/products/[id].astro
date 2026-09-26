@@ -24,7 +24,6 @@ const { data: seller } = await supabase
 const merchantName = seller?.business_name || 'Verified Seller';
 const sellerState = seller?.state || product.location_state || 'Nigeria';
 
-// All purchase inquiries go to Qaraye Marchants admin
 const orderMessage = `Hello Qaraye Marchants Admin, I want to purchase:\n\nProduct: ${product.title}\nProduct ID: #${product.id}\nPrice: N${Number(product.price).toLocaleString()} per ${product.unit}\nLocation: ${sellerState}\n\nPlease assist me with this purchase.`;
 const orderUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(orderMessage)}`;
 
@@ -105,14 +104,12 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
       </div>
     </div>
 
-    <!-- COMMENTS SECTION -->
     <div id="comments-section" data-product-id={product.id} style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--line-soft);">
       <h2 style="font-family: var(--display); font-size: 1.5rem; margin: 0 0 8px 0; color: var(--ink);">
         Public Comments <span id="comment-count" style="color: var(--ink-muted); font-weight: 400; font-size: 1rem;"></span>
       </h2>
       <p style="color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 24px;">Share your thoughts about this listing. For purchases, use the button above.</p>
 
-      <!-- Comment form (logged in) -->
       <div id="comment-form-wrap" style="display: none; margin-bottom: 32px;">
         <textarea id="comment-input" rows="3" placeholder="Write a public comment..."
           style="width: 100%; padding: 14px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-md); color: var(--ink); font-family: var(--body); font-size: 0.95rem; resize: vertical;"></textarea>
@@ -125,36 +122,39 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
         <p id="comment-status" style="font-family: var(--mono); font-size: 12px; margin-top: 10px;"></p>
       </div>
 
-      <!-- Sign-in prompt -->
       <div id="signin-prompt" style="display: none; padding: 24px; background: var(--bg-850); border: 1px dashed var(--line-strong); border-radius: var(--r-md); text-align: center; margin-bottom: 32px;">
         <p style="color: var(--ink-muted); margin: 0 0 14px 0; font-size: 0.95rem;">Sign in to leave a public comment.</p>
         <a href="/login" class="btn btn-primary" style="padding: 10px 22px;">Sign In</a>
       </div>
 
-      <!-- Comment list -->
       <div id="comments-list"></div>
       <p id="comments-loading" style="text-align: center; padding: 30px; color: var(--ink-muted); font-family: var(--mono); font-size: 12px;">Loading comments...</p>
     </div>
   </div>
 </Layout>
 
-<style>
+<style is:global>
   @media (max-width: 768px) {
     .product-grid {
       grid-template-columns: 1fr !important;
       gap: 24px !important;
     }
   }
+
   .comment-item {
     display: flex;
     gap: 14px;
     padding: 18px 0;
     border-bottom: 1px solid var(--line-soft);
+    align-items: flex-start;
   }
+
   .comment-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    border-radius: 50% !important;
     background: linear-gradient(135deg, var(--cyan), var(--violet));
     display: flex;
     align-items: center;
@@ -166,6 +166,17 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
     flex-shrink: 0;
     overflow: hidden;
   }
+
+  .comment-avatar img {
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+  }
+
   .comment-body { flex: 1; min-width: 0; }
   .comment-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
   .comment-author { font-weight: 600; color: var(--ink); font-size: 0.9rem; }
@@ -189,7 +200,6 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
   const commentsLoading = document.getElementById('comments-loading')!;
   const commentCount = document.getElementById('comment-count')!;
 
-  // ---- Contact info filter ----
   const PHONE_REGEX = /(\+?\d[\d\s\-\(\)\.]{8,}\d)/g;
   const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
   const URL_REGEX = /((https?:\/\/|www\.)[^\s]+)|(\b(wa\.me|t\.me|whatsapp\.com|telegram\.me|bit\.ly)\b[^\s]*)/gi;
@@ -223,7 +233,6 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
     return new Date(iso).toLocaleDateString();
   }
 
-  // ---- Auth check ----
   async function initAuth() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -235,7 +244,6 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
     }
   }
 
-  // ---- Load comments ----
   async function loadComments() {
     if (!productId) return;
     commentsLoading.style.display = 'block';
@@ -243,7 +251,7 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
 
     const { data: comments, error } = await supabase
       .from('comments')
-      .select('id, content, created_at, user_id')
+      .select('id, content, created_at, author_name, author_avatar_url')
       .eq('product_id', productId)
       .order('created_at', { ascending: false });
 
@@ -261,22 +269,11 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
       return;
     }
 
-    // Fetch author profiles in a batch
-    const userIds = [...new Set(comments.map(c => c.user_id))];
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, business_name, owner_name, avatar_url')
-      .in('id', userIds);
-
-    const profileMap: Record<string, any> = {};
-    (profiles || []).forEach(p => { profileMap[p.id] = p; });
-
     comments.forEach(c => {
-      const author = profileMap[c.user_id];
-      const name = author?.business_name || author?.owner_name || 'Anonymous';
+      const name = c.author_name || 'User';
       const initial = name.charAt(0).toUpperCase();
-      const avatarHtml = author?.avatar_url
-        ? '<img src="' + author.avatar_url + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+      const avatarHtml = c.author_avatar_url
+        ? '<img src="' + c.author_avatar_url + '" alt="" />'
         : initial;
 
       const item = document.createElement('div');
@@ -294,7 +291,6 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
     });
   }
 
-  // ---- Post comment ----
   postBtn.addEventListener('click', async () => {
     const raw = commentInput.value.trim();
     if (!raw) {
@@ -321,11 +317,23 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
     commentStatus.textContent = 'Posting...';
     commentStatus.style.color = 'var(--ink-muted)';
 
+    // Fetch current user's profile for denormalization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('business_name, owner_name, avatar_url')
+      .eq('id', user.id)
+      .single();
+
+    const authorName = profile?.business_name || profile?.owner_name || (user.email ? user.email.split('@')[0] : 'User');
+    const authorAvatar = profile?.avatar_url || null;
+
     const { error } = await supabase.from('comments').insert({
       product_id: Number(productId),
       user_id: user.id,
       content: clean,
-      is_flagged: flagged
+      is_flagged: flagged,
+      author_name: authorName,
+      author_avatar_url: authorAvatar
     });
 
     postBtn.disabled = false;
