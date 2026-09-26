@@ -1,0 +1,146 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout title="Edit Listing - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 800px;">
+    <a href="/dashboard/listings" style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px;">&larr; Back to My Listings</a>
+
+    <h1 style="font-family: var(--display); font-size: 2rem; margin-bottom: 8px; color: var(--ink);">Edit Listing</h1>
+    <p style="color: var(--ink-muted); margin-bottom: 32px;">Update your product details. Changes appear immediately on the marketplace.</p>
+
+    <form id="edit-form" style="display: flex; flex-direction: column; gap: 20px;">
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRODUCT TITLE *</label>
+        <input type="text" id="title" name="title" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">CATEGORY</label>
+        <select id="category" name="category" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+          <option value="grains">Grains & Cereals</option>
+          <option value="tubers">Tubers & Roots</option>
+          <option value="livestock">Livestock & Poultry</option>
+          <option value="fruits">Fruits & Vegetables</option>
+          <option value="seeds">Seeds & Seedlings</option>
+          <option value="fertilizers">Fertilizers & Inputs</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">DESCRIPTION</label>
+        <textarea id="description" name="description" rows="4" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); resize: vertical;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRICE (N)</label>
+          <input type="number" id="price" name="price" required min="0" step="0.01" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">UNIT</label>
+          <select id="unit" name="unit" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+            <option value="kg">Kilogram (kg)</option>
+            <option value="ton">Tonne (ton)</option>
+            <option value="bag">Bag (50kg)</option>
+            <option value="piece">Piece</option>
+            <option value="crate">Crate</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">QUANTITY</label>
+        <input type="number" id="quantity" name="quantity" required min="0" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
+          <input type="text" id="location_state" name="location_state" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">LGA / AREA</label>
+          <input type="text" id="location_lga" name="location_lga" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="padding: 14px 24px; font-size: 15px;">Save Changes</button>
+    </form>
+
+    <p id="status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px;"></p>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '../../../lib/supabase';
+
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const listingId = pathParts[pathParts.length - 1];
+
+  const form = document.getElementById('edit-form') as HTMLFormElement;
+  const statusEl = document.getElementById('status')!;
+
+  async function load() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      statusEl.textContent = 'You must be signed in.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', listingId)
+      .eq('seller_id', user.id)
+      .single();
+
+    if (error || !data) {
+      statusEl.textContent = 'Listing not found or you do not have permission.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    (document.getElementById('title') as HTMLInputElement).value = data.title || '';
+    (document.getElementById('category') as HTMLSelectElement).value = data.category || 'grains';
+    (document.getElementById('description') as HTMLTextAreaElement).value = data.description || '';
+    (document.getElementById('price') as HTMLInputElement).value = String(data.price || '');
+    (document.getElementById('unit') as HTMLSelectElement).value = data.unit || 'kg';
+    (document.getElementById('quantity') as HTMLInputElement).value = String(data.quantity || '');
+    (document.getElementById('location_state') as HTMLInputElement).value = data.location_state || '';
+    (document.getElementById('location_lga') as HTMLInputElement).value = data.location_lga || '';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = 'Saving...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const formData = new FormData(form);
+    const { error } = await supabase
+      .from('products')
+      .update({
+        title: formData.get('title'),
+        category: formData.get('category'),
+        description: formData.get('description'),
+        price: parseFloat(formData.get('price') as string),
+        unit: formData.get('unit'),
+        quantity: parseInt(formData.get('quantity') as string),
+        location_state: formData.get('location_state'),
+        location_lga: formData.get('location_lga')
+      })
+      .eq('id', listingId);
+
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = 'Saved! Redirecting...';
+      statusEl.style.color = 'var(--green)';
+      setTimeout(() => window.location.href = '/dashboard/listings', 800);
+    }
+  });
+
+  load();
+</script>
