@@ -1,0 +1,127 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Create a New Listing — Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 800px;">
+    <h1 style="font-family: var(--display); font-size: 2rem; margin-bottom: 8px; color: var(--ink);">Create a New Product Listing</h1>
+    <p style="color: var(--ink-muted); margin-bottom: 32px;">Fill in the details below to list your agricultural product on the marketplace.</p>
+
+    <form id="create-listing-form" style="display: flex; flex-direction: column; gap: 20px;">
+      <div>
+        <label for="title" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRODUCT TITLE</label>
+        <input type="text" id="title" name="title" required placeholder="e.g., Premium Long Grain Rice" 
+               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div>
+        <label for="category" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">CATEGORY</label>
+        <select id="category" name="category" required 
+                style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+          <option value="">Select a category</option>
+          <option value="grains">Grains & Cereals</option>
+          <option value="tubers">Tubers & Roots</option>
+          <option value="livestock">Livestock & Poultry</option>
+          <option value="fruits">Fruits & Vegetables</option>
+          <option value="seeds">Seeds & Seedlings</option>
+          <option value="fertilizers">Fertilizers & Inputs</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="description" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">DESCRIPTION</label>
+        <textarea id="description" name="description" rows="4" placeholder="Describe your product, its quality, and any other important details..."
+                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); resize: vertical;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label for="price" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRICE (₦)</label>
+          <input type="number" id="price" name="price" required min="0" step="0.01" placeholder="50000"
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+        <div>
+          <label for="unit" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">UNIT</label>
+          <select id="unit" name="unit" required 
+                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+            <option value="kg">Kilogram (kg)</option>
+            <option value="ton">Tonne (ton)</option>
+            <option value="bag">Bag (50kg)</option>
+            <option value="piece">Piece</option>
+            <option value="crate">Crate</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="quantity" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">QUANTITY AVAILABLE</label>
+        <input type="number" id="quantity" name="quantity" required min="1" placeholder="100"
+               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label for="location_state" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
+          <input type="text" id="location_state" name="location_state" placeholder="e.g., Kano" 
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+        <div>
+          <label for="location_lga" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">LGA / AREA</label>
+          <input type="text" id="location_lga" name="location_lga" placeholder="e.g., Dawanau" 
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 8px; padding: 14px 24px; font-size: 15px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Publish Listing
+      </button>
+    </form>
+
+    <p id="form-status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px;"></p>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const form = document.getElementById('create-listing-form') as HTMLFormElement;
+  const statusEl = document.getElementById('form-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = 'Publishing your listing...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const formData = new FormData(form);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      statusEl.textContent = 'Error: You must be logged in to publish a listing.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    const { error } = await supabase.from('products').insert({
+      seller_id: user.id,
+      title: formData.get('title'),
+      description: formData.get('description'),
+      category: formData.get('category'),
+      price: parseFloat(formData.get('price') as string),
+      unit: formData.get('unit'),
+      quantity: parseInt(formData.get('quantity') as string),
+      location_state: formData.get('location_state'),
+      location_lga: formData.get('location_lga'),
+      image_urls: []
+    });
+
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = 'Success! Your listing has been published.';
+      statusEl.style.color = 'var(--green)';
+      form.reset();
+    }
+  });
+</script>

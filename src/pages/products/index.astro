@@ -1,49 +1,68 @@
 ﻿---
 import Layout from '../../layouts/Layout.astro';
-import { products } from '../../data/products.js';
+import { supabase } from '../../lib/supabase';
 
-const categories = [...new Set(products.map(p => p.category))];
+const { data: products, error } = await supabase
+  .from('products')
+  .select('*')
+  .eq('status', 'active')
+  .order('created_at', { ascending: false });
 ---
 
-<Layout title="Browse Products — Qaraye Marchants" description="Browse agricultural products from verified merchants across Nigeria.">
+<Layout title="Marketplace — Qaraye Marchants" description="Browse agricultural products from merchants across Nigeria.">
   <div class="container" style="padding: 40px 24px;">
-    <h1 style="font-family: var(--display); font-size: 2.2rem; margin-bottom: 8px; color: var(--ink);">Browse Products</h1>
-    <p style="color: var(--ink-muted); margin-bottom: 32px;">Find agricultural products from verified merchants across Nigeria.</p>
-
-    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px;">
-      <a href="/products" style="font-family: var(--mono); font-size: 12px; padding: 8px 16px; border-radius: var(--r-full); background: var(--cyan-soft); color: var(--cyan); border: 1px solid var(--line); text-decoration: none;">All</a>
-      {categories.map(cat => (
-        <a href={`/products?category=${cat}`} style="font-family: var(--mono); font-size: 12px; padding: 8px 16px; border-radius: var(--r-full); background: var(--bg-850); color: var(--ink-muted); border: 1px solid var(--line-soft); text-decoration: none;">{cat}</a>
-      ))}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h1 style="font-family: var(--display); font-size: 2rem; margin: 0; color: var(--ink);">Marketplace</h1>
+        <p style="color: var(--ink-muted); margin: 4px 0 0 0;">Browse fresh produce and agricultural goods from verified merchants.</p>
+      </div>
+      <a href="/dashboard/create-listing" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        List Your Product
+      </a>
     </div>
 
-    <div style="display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
-      {products.map((product) => (
-        <a href={`/products/${product.id}`} style="text-decoration: none; display: block; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden; transition: 0.2s;" class="product-card">
-          <div style="height: 180px; background: var(--bg-800); display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-family: var(--mono); font-size: 12px;">
-            {product.image ? <img src={product.image} alt={product.name} style="width: 100%; height: 100%; object-fit: cover;" /> : 'Product Image'}
-          </div>
-          <div style="padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-              <h2 style="font-family: var(--display); font-size: 1.1rem; margin: 0; color: var(--ink);">{product.name}</h2>
-              {product.verified && <span style="font-size: 10px; padding: 2px 8px; border-radius: var(--r-full); background: var(--cyan-soft); color: var(--cyan); font-family: var(--mono);">✅ Verified</span>}
+    {error && (
+      <div style="background: var(--bg-850); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--red); color: var(--red); margin-bottom: 24px;">
+        Error loading products: {error.message}
+      </div>
+    )}
+
+    {(!products || products.length === 0) ? (
+      <div style="text-align: center; padding: 80px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);">
+        <h2 style="font-family: var(--display); color: var(--ink);">No products listed yet</h2>
+        <p style="color: var(--ink-muted); margin-bottom: 24px;">Be the first merchant to list a product on the marketplace.</p>
+        <a href="/dashboard/create-listing" class="btn btn-primary">Create a Listing</a>
+      </div>
+    ) : (
+      <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+        {products.map((product) => (
+          <a href={`/products/${product.id}`} style="text-decoration: none; display: flex; flex-direction: column; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <div style="height: 180px; background: var(--bg-800); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--line-soft);">
+              {product.image_urls && product.image_urls.length > 0 ? (
+                <img src={product.image_urls[0]} alt={product.title} style="width: 100%; height: 100%; object-fit: cover;" />
+              ) : (
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              )}
             </div>
-            <p style="font-size: 0.9rem; color: var(--ink-muted); margin: 0 0 12px 0;">{product.location}</p>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-family: var(--display); font-weight: 700; font-size: 1.2rem; color: var(--cyan);">₦{product.price.toLocaleString()}</span>
-              <span style="font-family: var(--mono); font-size: 11px; color: var(--ink-faint);">{product.unit}</span>
+            <div style="padding: 16px; flex: 1; display: flex; flex-direction: column;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <span style="font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--cyan); background: var(--cyan-soft); padding: 2px 8px; border-radius: var(--r-full);">{product.category}</span>
+                <span style="font-family: var(--mono); font-size: 11px; color: var(--ink-faint);">{product.unit}</span>
+              </div>
+              <h3 style="font-family: var(--display); font-size: 1.1rem; margin: 0 0 4px 0; color: var(--ink);">{product.title}</h3>
+              <p style="color: var(--ink-muted); font-size: 0.85rem; margin: 0 0 16px 0; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{product.description}</p>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line-soft); padding-top: 12px;">
+                <div>
+                  <div style="font-family: var(--display); font-weight: 700; font-size: 1.2rem; color: var(--cyan);">₦{Number(product.price).toLocaleString()}</div>
+                  <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint);">{product.location_state || 'Nigeria'}</div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </div>
             </div>
-          </div>
-        </a>
-      ))}
-    </div>
+          </a>
+        ))}
+      </div>
+    )}
   </div>
 </Layout>
-
-<style>
-  .product-card:hover {
-    border-color: var(--cyan);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  }
-</style>
