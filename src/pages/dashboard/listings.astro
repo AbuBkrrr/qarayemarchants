@@ -10,10 +10,16 @@ import Layout from '../../layouts/Layout.astro';
         <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 6px 0; color: var(--ink);">My Listings</h1>
         <p style="color: var(--ink-muted); margin: 0;">Manage your product listings, track views, and update details.</p>
       </div>
-      <a href="/dashboard/create-listing" class="btn btn-primary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Listing
-      </a>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="/dashboard/bulk-upload" class="btn btn-ghost">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Bulk Upload
+        </a>
+        <a href="/dashboard/create-listing" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Listing
+        </a>
+      </div>
     </div>
 
     <!-- Stats Grid -->

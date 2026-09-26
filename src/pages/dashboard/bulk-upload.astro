@@ -1,0 +1,525 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Bulk Upload Listings - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 1100px;">
+
+    <a href="/dashboard/listings" style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px;">&larr; Back to My Listings</a>
+
+    <div style="margin-bottom: 32px;">
+      <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 6px 0; color: var(--ink);">Bulk Upload Listings</h1>
+      <p style="color: var(--ink-muted); margin: 0;">Import up to 500 products at once using a CSV file. Perfect for merchants with large inventory.</p>
+    </div>
+
+    <!-- STEP 1: Download template -->
+    <div class="bulk-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h2 class="step-title">Download the CSV template</h2>
+        <p class="step-desc">Fill in the template with your products. Use the exact column headers — they are case-insensitive but the names must match.</p>
+        <button id="download-template" class="btn btn-primary" style="margin-top: 12px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Template
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Upload -->
+    <div class="bulk-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h2 class="step-title">Upload your filled CSV</h2>
+        <p class="step-desc">Max file size: 1MB. Max rows: 500.</p>
+        <div id="drop-zone" class="drop-zone">
+          <input type="file" id="file-input" accept=".csv,text/csv" style="display: none;">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p style="margin: 0; font-weight: 600; color: var(--ink);">Click to upload or drag and drop</p>
+          <p style="margin: 4px 0 0 0; font-family: var(--mono); font-size: 11px; color: var(--ink-faint);">.csv files only</p>
+        </div>
+        <p id="file-status" style="font-family: var(--mono); font-size: 12px; margin-top: 12px;"></p>
+      </div>
+    </div>
+
+    <!-- STEP 3: Preview -->
+    <div id="preview-section" class="bulk-step" style="display: none;">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h2 class="step-title">Review before importing</h2>
+        <p class="step-desc" id="preview-summary"></p>
+        <div id="preview-table-wrap" style="overflow-x: auto; margin-top: 16px; border: 1px solid var(--line-soft); border-radius: var(--r-md);">
+          <table id="preview-table" class="bulk-table">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+          <button id="import-btn" class="btn btn-primary" style="padding: 12px 24px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Import Valid Rows
+          </button>
+          <button id="clear-btn" class="btn btn-ghost" style="padding: 12px 24px;">Cancel</button>
+        </div>
+        <div id="import-progress" style="display: none; margin-top: 20px;">
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 8px;" id="progress-label">Importing...</div>
+          <div style="width: 100%; height: 8px; background: var(--bg-850); border-radius: 4px; overflow: hidden;">
+            <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--violet)); transition: width 0.2s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div id="result-section" style="display: none; margin-top: 24px;">
+      <div class="bulk-step" style="border-left-color: var(--green);">
+        <div class="step-num" style="background: var(--green); color: var(--bg-950);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="step-content">
+          <h2 class="step-title">Import complete</h2>
+          <p class="step-desc" id="result-summary"></p>
+          <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+            <a href="/dashboard/listings" class="btn btn-primary" style="padding: 10px 20px;">View My Listings</a>
+            <button id="reset-btn" class="btn btn-ghost" style="padding: 10px 20px;">Import Another File</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</Layout>
+
+<style is:global>
+  .bulk-step {
+    display: flex;
+    gap: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--cyan);
+    border-radius: var(--r-lg);
+    padding: 24px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--cyan);
+    color: var(--bg-950);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .step-content { flex: 1; min-width: 0; }
+  .step-title {
+    font-family: var(--display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 6px 0;
+  }
+  .step-desc {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.55;
+  }
+  .drop-zone {
+    border: 2px dashed var(--line-strong);
+    border-radius: var(--r-md);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-850);
+    transition: 0.15s;
+    margin-top: 14px;
+  }
+  .drop-zone:hover,
+  .drop-zone.dragover {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+  }
+  .bulk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--body);
+    font-size: 13px;
+  }
+  .bulk-table th {
+    background: var(--bg-850);
+    color: var(--ink-muted);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line-soft);
+    white-space: nowrap;
+  }
+  .bulk-table td {
+    padding: 10px 14px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  .bulk-table tr.row-error td {
+    background: rgba(239,68,68,0.06);
+  }
+  .bulk-table tr.row-valid td:first-child {
+    border-left: 3px solid var(--green);
+  }
+  .bulk-table tr.row-error td:first-child {
+    border-left: 3px solid var(--red);
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--r-full);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .status-pill.valid {
+    background: rgba(16,217,130,0.15);
+    color: var(--green);
+  }
+  .status-pill.error {
+    background: rgba(239,68,68,0.15);
+    color: var(--red);
+  }
+  .error-list {
+    color: var(--red);
+    font-size: 11.5px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .error-list li {
+    margin-bottom: 2px;
+  }
+</style>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const dropZone = document.getElementById('drop-zone')!;
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const fileStatus = document.getElementById('file-status')!;
+  const previewSection = document.getElementById('preview-section')!;
+  const previewSummary = document.getElementById('preview-summary')!;
+  const previewTable = document.getElementById('preview-table')!;
+  const importBtn = document.getElementById('import-btn') as HTMLButtonElement;
+  const clearBtn = document.getElementById('clear-btn')!;
+  const importProgress = document.getElementById('import-progress')!;
+  const progressBar = document.getElementById('progress-bar')!;
+  const progressLabel = document.getElementById('progress-label')!;
+  const resultSection = document.getElementById('result-section')!;
+  const resultSummary = document.getElementById('result-summary')!;
+  const resetBtn = document.getElementById('reset-btn')!;
+  const downloadTemplate = document.getElementById('download-template')!;
+
+  const CATEGORY_MAP: Record<string, string> = {
+    'grains': 'grains', 'grains & cereals': 'grains', 'grains and cereals': 'grains', 'cereals': 'grains', 'cereal': 'grains', 'grain': 'grains',
+    'tubers': 'tubers', 'tubers & roots': 'tubers', 'roots': 'tubers', 'tuber': 'tubers', 'root': 'tubers',
+    'livestock': 'livestock', 'livestock & poultry': 'livestock', 'poultry': 'livestock', 'animals': 'livestock',
+    'fruits': 'fruits', 'fruits & vegetables': 'fruits', 'vegetables': 'fruits', 'fruit': 'fruits', 'vegetable': 'fruits',
+    'seeds': 'seeds', 'seeds & seedlings': 'seeds', 'seedlings': 'seeds', 'seed': 'seeds', 'seedling': 'seeds',
+    'fertilizers': 'fertilizers', 'fertilizers & inputs': 'fertilizers', 'inputs': 'fertilizers', 'fertilizer': 'fertilizers', 'input': 'fertilizers'
+  };
+  const VALID_UNITS = ['kg', 'ton', 'bag', 'piece', 'crate'];
+  const REQUIRED_COLUMNS = ['title', 'category', 'price', 'unit', 'quantity'];
+
+  let parsedRows: any[] = [];
+  let headerMap: Record<string, number> = {};
+
+  // ---- CSV Parser (handles quoted fields, escaped quotes, commas in quotes) ----
+  function parseCSV(text: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      const next = text[i + 1];
+      if (inQuotes) {
+        if (c === '"' && next === '"') { field += '"'; i++; }
+        else if (c === '"') { inQuotes = false; }
+        else { field += c; }
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+        else if (c === '\r') { /* skip */ }
+        else { field += c; }
+      }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(f => f.trim() !== ''));
+  }
+
+  function normalizeHeader(h: string): string {
+    return h.trim().toLowerCase().replace(/\s+/g, '_');
+  }
+
+  function validateRow(raw: Record<string, string>): { data: any; errors: string[] } {
+    const errors: string[] = [];
+
+    const title = (raw.title || '').trim();
+    if (!title) errors.push('Title is required');
+
+    const categoryRaw = (raw.category || '').trim().toLowerCase();
+    const category = CATEGORY_MAP[categoryRaw] || '';
+    if (!category) errors.push('Invalid category: "' + (raw.category || '') + '"');
+
+    const price = parseFloat((raw.price || '').replace(/[^0-9.]/g, ''));
+    if (isNaN(price) || price <= 0) errors.push('Price must be a positive number');
+
+    const unitRaw = (raw.unit || '').trim().toLowerCase();
+    const unit = VALID_UNITS.includes(unitRaw) ? unitRaw : '';
+    if (!unit) errors.push('Unit must be one of: ' + VALID_UNITS.join(', '));
+
+    const quantity = parseInt((raw.quantity || '').replace(/[^0-9]/g, ''), 10);
+    if (isNaN(quantity) || quantity < 0) errors.push('Quantity must be a non-negative integer');
+
+    return {
+      data: {
+        title,
+        description: (raw.description || '').trim(),
+        category,
+        price,
+        unit,
+        quantity,
+        location_state: (raw.location_state || raw.state || '').trim(),
+        location_lga: (raw.location_lga || raw.lga || '').trim()
+      },
+      errors
+    };
+  }
+
+  // ---- Template download ----
+  downloadTemplate.addEventListener('click', () => {
+    const headers = ['title', 'description', 'category', 'price', 'unit', 'quantity', 'location_state', 'location_lga'];
+    const sample = [
+      ['Premium Long Grain Rice', 'High-quality parboiled rice, well-dried and packaged.', 'grains', '45000', 'bag', '100', 'Kano', 'Dawanau'],
+      ['Fresh Sweet Potatoes', 'Orange-fleshed sweet potatoes, harvested this week.', 'tubers', '15000', 'bag', '50', 'Benue', 'Gboko'],
+      ['Live Broilers', 'Healthy 6-week old broilers ready for sale.', 'livestock', '3500', 'piece', '200', 'Oyo', 'Ibadan North']
+    ];
+    const csv = [headers, ...sample]
+      .map(r => r.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'qaraye-marchants-listings-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ---- Drop zone ----
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer?.files?.[0];
+    if (f) handleFile(f);
+  });
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files?.[0];
+    if (f) handleFile(f);
+  });
+
+  function handleFile(file: File) {
+    fileStatus.textContent = '';
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      fileStatus.textContent = 'Error: Please upload a .csv file.';
+      fileStatus.style.color = 'var(--red)';
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      fileStatus.textContent = 'Error: File exceeds 1MB.';
+      fileStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = String(ev.target?.result || '');
+      processCSV(text);
+    };
+    reader.readAsText(file);
+  }
+
+  function processCSV(text: string) {
+    const rows = parseCSV(text);
+    if (rows.length < 2) {
+      fileStatus.textContent = 'Error: File must have a header row and at least one data row.';
+      fileStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    const headers = rows[0].map(normalizeHeader);
+    headerMap = {};
+    headers.forEach((h, i) => { headerMap[h] = i; });
+
+    const missing = REQUIRED_COLUMNS.filter(c => !(c in headerMap));
+    if (missing.length > 0) {
+      fileStatus.textContent = 'Error: Missing required columns: ' + missing.join(', ');
+      fileStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    const dataRows = rows.slice(1);
+    if (dataRows.length > 500) {
+      fileStatus.textContent = 'Error: Too many rows (' + dataRows.length + '). Maximum is 500.';
+      fileStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    parsedRows = dataRows.map((r, i) => {
+      const raw: Record<string, string> = {};
+      Object.entries(headerMap).forEach(([k, idx]) => { raw[k] = r[idx] || ''; });
+      const { data, errors } = validateRow(raw);
+      return { rowNumber: i + 2, data, errors };
+    });
+
+    fileStatus.textContent = 'Parsed ' + parsedRows.length + ' row' + (parsedRows.length === 1 ? '' : 's') + '.';
+    fileStatus.style.color = 'var(--green)';
+    renderPreview();
+    previewSection.style.display = 'flex';
+    resultSection.style.display = 'none';
+  }
+
+  function renderPreview() {
+    const valid = parsedRows.filter(r => r.errors.length === 0);
+    const invalid = parsedRows.filter(r => r.errors.length > 0);
+
+    previewSummary.innerHTML =
+      '<strong style="color: var(--green);">' + valid.length + ' valid</strong>' +
+      (invalid.length > 0 ? ' &bull; <strong style="color: var(--red);">' + invalid.length + ' with errors</strong> (will be skipped)' : '');
+
+    const thead = previewTable.querySelector('thead')!;
+    const tbody = previewTable.querySelector('tbody')!;
+    thead.innerHTML = '<tr>' +
+      '<th>Row</th><th>Status</th><th>Title</th><th>Category</th><th>Price</th><th>Unit</th><th>Qty</th><th>Location</th>' +
+    '</tr>';
+
+    tbody.innerHTML = parsedRows.map(r => {
+      const isValid = r.errors.length === 0;
+      const d = r.data;
+      return '<tr class="' + (isValid ? 'row-valid' : 'row-error') + '">' +
+        '<td style="font-family: var(--mono); font-size: 11px; color: var(--ink-faint);">' + r.rowNumber + '</td>' +
+        '<td>' + (isValid
+          ? '<span class="status-pill valid">Valid</span>'
+          : '<span class="status-pill error">Error</span><ul class="error-list" style="margin-top: 6px;">' + r.errors.map((e: string) => '<li>&bull; ' + e + '</li>').join('') + '</ul>') +
+        '</td>' +
+        '<td>' + escapeHtml(d.title || '-') + '</td>' +
+        '<td>' + escapeHtml(d.category || '-') + '</td>' +
+        '<td>' + (d.price ? '&#8358;' + d.price.toLocaleString() : '-') + '</td>' +
+        '<td>' + escapeHtml(d.unit || '-') + '</td>' +
+        '<td>' + (d.quantity != null ? d.quantity : '-') + '</td>' +
+        '<td>' + escapeHtml([d.location_lga, d.location_state].filter(Boolean).join(', ') || '-') + '</td>' +
+      '</tr>';
+    }).join('');
+
+    importBtn.disabled = valid.length === 0;
+    importBtn.textContent = valid.length === 0
+      ? 'No Valid Rows To Import'
+      : 'Import ' + valid.length + ' Valid Row' + (valid.length === 1 ? '' : 's');
+  }
+
+  function escapeHtml(s: string) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  // ---- Import ----
+  importBtn.addEventListener('click', async () => {
+    const valid = parsedRows.filter(r => r.errors.length === 0);
+    if (valid.length === 0) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('You must be signed in.');
+      window.location.href = '/login';
+      return;
+    }
+
+    importBtn.disabled = true;
+    importProgress.style.display = 'block';
+    progressBar.style.width = '0%';
+
+    const CHUNK = 25;
+    let inserted = 0;
+    let failed = 0;
+    const failures: { row: number; reason: string }[] = [];
+
+    for (let i = 0; i < valid.length; i += CHUNK) {
+      const chunk = valid.slice(i, i + CHUNK);
+      const payload = chunk.map(r => ({
+        seller_id: user.id,
+        title: r.data.title,
+        description: r.data.description,
+        category: r.data.category,
+        price: r.data.price,
+        unit: r.data.unit,
+        quantity: r.data.quantity,
+        location_state: r.data.location_state,
+        location_lga: r.data.location_lga,
+        image_urls: [],
+        media_urls: [],
+        status: 'active'
+      }));
+
+      const { error } = await supabase.from('products').insert(payload);
+      if (error) {
+        failed += chunk.length;
+        chunk.forEach(r => failures.push({ row: r.rowNumber, reason: error.message }));
+      } else {
+        inserted += chunk.length;
+      }
+
+      const pct = Math.round(Math.min(100, ((i + chunk.length) / valid.length) * 100));
+      progressBar.style.width = pct + '%';
+      progressLabel.textContent = 'Importing... ' + inserted + ' / ' + valid.length;
+    }
+
+    importProgress.style.display = 'none';
+    previewSection.style.display = 'none';
+    resultSection.style.display = 'block';
+
+    let summary = '<strong style="color: var(--green);">' + inserted + '</strong> listing' + (inserted === 1 ? '' : 's') + ' imported successfully.';
+    if (failed > 0) {
+      summary += ' <strong style="color: var(--red);">' + failed + '</strong> failed.';
+      summary += '<ul style="margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--red); padding-left: 18px;">' +
+        failures.slice(0, 10).map(f => '<li>Row ' + f.row + ': ' + escapeHtml(f.reason) + '</li>').join('') +
+        (failures.length > 10 ? '<li>...and ' + (failures.length - 10) + ' more</li>' : '') +
+        '</ul>';
+    }
+    resultSummary.innerHTML = summary;
+  });
+
+  // ---- Reset / Clear ----
+  function resetAll() {
+    parsedRows = [];
+    fileInput.value = '';
+    fileStatus.textContent = '';
+    previewSection.style.display = 'none';
+    resultSection.style.display = 'none';
+    importBtn.disabled = false;
+  }
+  clearBtn.addEventListener('click', resetAll);
+  resetBtn.addEventListener('click', resetAll);
+</script>
