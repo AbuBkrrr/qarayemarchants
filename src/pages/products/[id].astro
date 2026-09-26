@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
+import { ADMIN_WHATSAPP } from '../../config';
 
 const { id } = Astro.params;
 
@@ -14,19 +15,18 @@ if (error || !product) {
   return Astro.redirect('/products');
 }
 
-// Fetch seller profile
 const { data: seller } = await supabase
   .from('profiles')
-  .select('*')
+  .select('business_name, owner_name, state, bio, avatar_url')
   .eq('id', product.seller_id)
   .single();
 
-const merchantName = seller?.business_name || 'Qaraye Marchants Seller';
-const whatsappNumber = seller?.whatsapp || '2348000000000';
+const merchantName = seller?.business_name || 'Verified Seller';
 const sellerState = seller?.state || product.location_state || 'Nigeria';
 
-const message = `Hello ${merchantName}, I am interested in your listing: ${product.title} (ID: ${product.id}). Please provide more details.`;
-const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+// All purchase inquiries go to Qaraye Marchants admin
+const orderMessage = `Hello Qaraye Marchants Admin, I want to purchase:\n\nProduct: ${product.title}\nProduct ID: #${product.id}\nPrice: N${Number(product.price).toLocaleString()} per ${product.unit}\nLocation: ${sellerState}\n\nPlease assist me with this purchase.`;
+const orderUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(orderMessage)}`;
 
 const mediaList = product.media_urls || product.image_urls || [];
 const primaryMedia = mediaList.length > 0 ? mediaList[0] : null;
@@ -78,7 +78,7 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
         </div>
 
         <p style="font-size: 1.5rem; font-family: var(--display); font-weight: 700; color: var(--cyan); margin: 0 0 8px 0;">
-          &#8358;{Number(product.price).toLocaleString()} 
+          &#8358;{Number(product.price).toLocaleString()}
           <span style="font-size: 0.9rem; font-weight: 400; color: var(--ink-muted); font-family: var(--body);">per {product.unit}</span>
         </p>
         <p style="color: var(--ink-muted); margin-bottom: 24px;">{sellerState} &bull; {product.quantity} units available</p>
@@ -91,12 +91,49 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
         {seller?.bio && <p style="color: var(--ink-faint); font-size: 0.9rem; margin-bottom: 32px;">{seller.bio}</p>}
         {!seller?.bio && <p style="color: var(--ink-faint); font-size: 0.9rem; margin-bottom: 32px;">{sellerState}, Nigeria</p>}
 
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <div style="padding: 16px; background: var(--cyan-soft); border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 20px;">
+          <p style="margin: 0; font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); line-height: 1.6;">
+            <strong style="color: var(--ink);">Safe Purchases Only:</strong> All transactions must go through Qaraye Marchants Admin. This protects you and guarantees a verified purchase.
+          </p>
+        </div>
+
+        <a href={orderUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          Contact Seller on WhatsApp
+          Contact Qaraye Marchants to Purchase
         </a>
-        <p style="text-align: center; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-top: 12px;">You will be redirected to WhatsApp to message the merchant.</p>
+        <p style="text-align: center; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-top: 12px;">Your message goes directly to Qaraye Marchants Admin for a safe transaction.</p>
       </div>
+    </div>
+
+    <!-- COMMENTS SECTION -->
+    <div id="comments-section" data-product-id={product.id} style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--line-soft);">
+      <h2 style="font-family: var(--display); font-size: 1.5rem; margin: 0 0 8px 0; color: var(--ink);">
+        Public Comments <span id="comment-count" style="color: var(--ink-muted); font-weight: 400; font-size: 1rem;"></span>
+      </h2>
+      <p style="color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 24px;">Share your thoughts about this listing. For purchases, use the button above.</p>
+
+      <!-- Comment form (logged in) -->
+      <div id="comment-form-wrap" style="display: none; margin-bottom: 32px;">
+        <textarea id="comment-input" rows="3" placeholder="Write a public comment..."
+          style="width: 100%; padding: 14px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-md); color: var(--ink); font-family: var(--body); font-size: 0.95rem; resize: vertical;"></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+          <p style="font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin: 0;">
+            Phone numbers, emails, and external links are automatically hidden.
+          </p>
+          <button id="post-comment-btn" class="btn btn-primary" style="padding: 10px 22px;">Post Comment</button>
+        </div>
+        <p id="comment-status" style="font-family: var(--mono); font-size: 12px; margin-top: 10px;"></p>
+      </div>
+
+      <!-- Sign-in prompt -->
+      <div id="signin-prompt" style="display: none; padding: 24px; background: var(--bg-850); border: 1px dashed var(--line-strong); border-radius: var(--r-md); text-align: center; margin-bottom: 32px;">
+        <p style="color: var(--ink-muted); margin: 0 0 14px 0; font-size: 0.95rem;">Sign in to leave a public comment.</p>
+        <a href="/login" class="btn btn-primary" style="padding: 10px 22px;">Sign In</a>
+      </div>
+
+      <!-- Comment list -->
+      <div id="comments-list"></div>
+      <p id="comments-loading" style="text-align: center; padding: 30px; color: var(--ink-muted); font-family: var(--mono); font-size: 12px;">Loading comments...</p>
     </div>
   </div>
 </Layout>
@@ -108,4 +145,205 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
       gap: 24px !important;
     }
   }
+  .comment-item {
+    display: flex;
+    gap: 14px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-950);
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .comment-body { flex: 1; min-width: 0; }
+  .comment-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .comment-author { font-weight: 600; color: var(--ink); font-size: 0.9rem; }
+  .comment-time { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+  .comment-text { color: var(--ink-muted); font-size: 0.92rem; line-height: 1.6; word-wrap: break-word; }
+  .comment-text .hidden-badge { background: var(--red); color: white; padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 10px; }
 </style>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const section = document.getElementById('comments-section');
+  const productId = section?.dataset.productId;
+
+  const commentFormWrap = document.getElementById('comment-form-wrap')!;
+  const signinPrompt = document.getElementById('signin-prompt')!;
+  const commentInput = document.getElementById('comment-input') as HTMLTextAreaElement;
+  const postBtn = document.getElementById('post-comment-btn') as HTMLButtonElement;
+  const commentStatus = document.getElementById('comment-status')!;
+  const commentsList = document.getElementById('comments-list')!;
+  const commentsLoading = document.getElementById('comments-loading')!;
+  const commentCount = document.getElementById('comment-count')!;
+
+  // ---- Contact info filter ----
+  const PHONE_REGEX = /(\+?\d[\d\s\-\(\)\.]{8,}\d)/g;
+  const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+  const URL_REGEX = /((https?:\/\/|www\.)[^\s]+)|(\b(wa\.me|t\.me|whatsapp\.com|telegram\.me|bit\.ly)\b[^\s]*)/gi;
+
+  function sanitize(text: string): { clean: string; flagged: boolean } {
+    let clean = text;
+    let flagged = false;
+    if (PHONE_REGEX.test(clean)) { clean = clean.replace(PHONE_REGEX, '[phone hidden]'); flagged = true; PHONE_REGEX.lastIndex = 0; }
+    if (EMAIL_REGEX.test(clean)) { clean = clean.replace(EMAIL_REGEX, '[email hidden]'); flagged = true; EMAIL_REGEX.lastIndex = 0; }
+    if (URL_REGEX.test(clean)) { clean = clean.replace(URL_REGEX, '[link hidden]'); flagged = true; URL_REGEX.lastIndex = 0; }
+    return { clean, flagged };
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  function highlightHidden(text: string) {
+    return escapeHtml(text)
+      .replace(/\[phone hidden\]/g, '<span class="hidden-badge">PHONE HIDDEN</span>')
+      .replace(/\[email hidden\]/g, '<span class="hidden-badge">EMAIL HIDDEN</span>')
+      .replace(/\[link hidden\]/g, '<span class="hidden-badge">LINK HIDDEN</span>');
+  }
+
+  function timeAgo(iso: string) {
+    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+    return new Date(iso).toLocaleDateString();
+  }
+
+  // ---- Auth check ----
+  async function initAuth() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      commentFormWrap.style.display = 'block';
+      signinPrompt.style.display = 'none';
+    } else {
+      commentFormWrap.style.display = 'none';
+      signinPrompt.style.display = 'block';
+    }
+  }
+
+  // ---- Load comments ----
+  async function loadComments() {
+    if (!productId) return;
+    commentsLoading.style.display = 'block';
+    commentsList.innerHTML = '';
+
+    const { data: comments, error } = await supabase
+      .from('comments')
+      .select('id, content, created_at, user_id')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      commentsLoading.textContent = 'Error loading comments: ' + error.message;
+      commentsLoading.style.color = 'var(--red)';
+      return;
+    }
+
+    commentsLoading.style.display = 'none';
+    commentCount.textContent = comments && comments.length > 0 ? '(' + comments.length + ')' : '(0)';
+
+    if (!comments || comments.length === 0) {
+      commentsList.innerHTML = '<p style="text-align:center; padding: 30px; color: var(--ink-muted); font-size: 0.9rem;">No comments yet. Be the first to share your thoughts.</p>';
+      return;
+    }
+
+    // Fetch author profiles in a batch
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, business_name, owner_name, avatar_url')
+      .in('id', userIds);
+
+    const profileMap: Record<string, any> = {};
+    (profiles || []).forEach(p => { profileMap[p.id] = p; });
+
+    comments.forEach(c => {
+      const author = profileMap[c.user_id];
+      const name = author?.business_name || author?.owner_name || 'Anonymous';
+      const initial = name.charAt(0).toUpperCase();
+      const avatarHtml = author?.avatar_url
+        ? '<img src="' + author.avatar_url + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+        : initial;
+
+      const item = document.createElement('div');
+      item.className = 'comment-item';
+      item.innerHTML =
+        '<div class="comment-avatar">' + avatarHtml + '</div>' +
+        '<div class="comment-body">' +
+          '<div class="comment-meta">' +
+            '<span class="comment-author">' + escapeHtml(name) + '</span>' +
+            '<span class="comment-time">' + timeAgo(c.created_at) + '</span>' +
+          '</div>' +
+          '<div class="comment-text">' + highlightHidden(c.content) + '</div>' +
+        '</div>';
+      commentsList.appendChild(item);
+    });
+  }
+
+  // ---- Post comment ----
+  postBtn.addEventListener('click', async () => {
+    const raw = commentInput.value.trim();
+    if (!raw) {
+      commentStatus.textContent = 'Please write something before posting.';
+      commentStatus.style.color = 'var(--red)';
+      return;
+    }
+    if (raw.length > 1000) {
+      commentStatus.textContent = 'Comment is too long (max 1000 characters).';
+      commentStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      commentStatus.textContent = 'You must be signed in to comment.';
+      commentStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    const { clean, flagged } = sanitize(raw);
+
+    postBtn.disabled = true;
+    commentStatus.textContent = 'Posting...';
+    commentStatus.style.color = 'var(--ink-muted)';
+
+    const { error } = await supabase.from('comments').insert({
+      product_id: Number(productId),
+      user_id: user.id,
+      content: clean,
+      is_flagged: flagged
+    });
+
+    postBtn.disabled = false;
+
+    if (error) {
+      commentStatus.textContent = 'Error: ' + error.message;
+      commentStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    commentStatus.textContent = flagged
+      ? 'Posted. Contact info was hidden for safety.'
+      : 'Comment posted.';
+    commentStatus.style.color = 'var(--green)';
+    commentInput.value = '';
+    await loadComments();
+  });
+
+  initAuth();
+  loadComments();
+</script>
