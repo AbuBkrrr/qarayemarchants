@@ -1,0 +1,204 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Saved Listings - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 1100px;">
+
+    <div style="margin-bottom: 32px;">
+      <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 6px 0; color: var(--ink);">Saved Items</h1>
+      <p style="color: var(--ink-muted); margin: 0;">Products you have bookmarked for later.</p>
+    </div>
+
+    <div id="saved-container">
+      <p id="loading" style="text-align: center; padding: 60px; color: var(--ink-muted); font-family: var(--mono); font-size: 12px;">Loading saved items...</p>
+    </div>
+
+  </div>
+</Layout>
+
+<style is:global>
+  .saved-card {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .saved-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cyan);
+    opacity: 1;
+  }
+  .saved-card .sc-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--bg-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .saved-card .sc-thumb img,
+  .saved-card .sc-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .saved-card .sc-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.9);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    z-index: 2;
+    padding: 0;
+  }
+  .saved-card .sc-remove:hover {
+    background: rgba(239,68,68,1);
+    transform: scale(1.08);
+  }
+  .saved-card .sc-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .saved-card .sc-title {
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .saved-card .sc-price {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--cyan);
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .saved-card .sc-loc {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+</style>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const container = document.getElementById('saved-container')!;
+  const loading = document.getElementById('loading')!;
+
+  function escapeHtml(s: string) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  async function load() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      loading.style.display = 'none';
+      container.innerHTML = '<div style="text-align:center; padding: 60px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);"><p style="color: var(--ink-muted); margin: 0 0 16px 0;">Sign in to see your saved items.</p><a href="/login" class="btn btn-primary">Sign In</a></div>';
+      return;
+    }
+
+    // Fetch saved listing ids + joined product rows
+    const { data: saved, error } = await supabase
+      .from('saved_listings')
+      .select('id, product_id, created_at, products:product_id (id, title, price, unit, location_state, media_urls, image_urls, status)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    loading.style.display = 'none';
+
+    if (error) {
+      container.innerHTML = '<p style="text-align:center; padding: 40px; color: var(--red); font-family: var(--mono); font-size: 13px;">Error: ' + error.message + '</p>';
+      return;
+    }
+
+    // Filter out any with null product (deleted products)
+    const valid = (saved || []).filter((s: any) => s.products);
+
+    if (valid.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 80px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" style="margin-bottom: 16px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><h2 style="font-family: var(--display); color: var(--ink); margin: 0 0 8px 0;">No saved items yet</h2><p style="color: var(--ink-muted); margin-bottom: 24px;">Tap the heart on any product to save it here.</p><a href="/products" class="btn btn-primary">Browse Marketplace</a></div>';
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));';
+
+    valid.forEach((row: any) => {
+      const p = row.products;
+      const mediaList = p.media_urls || p.image_urls || [];
+      const media = mediaList[0];
+      const isVideo = media && media.match(/\.(mp4|webm|mov)$/i);
+      const mediaHtml = media
+        ? (isVideo ? '<video src="' + media + '" muted></video>' : '<img src="' + media + '" alt="" loading="lazy">')
+        : '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>';
+
+      const card = document.createElement('div');
+      card.className = 'saved-card';
+      card.innerHTML =
+        '<button class="sc-remove" data-product-id="' + p.id + '" aria-label="Remove from saved"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+        '<a href="/products/' + p.id + '" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; flex: 1;">' +
+          '<div class="sc-thumb">' + mediaHtml + '</div>' +
+          '<div class="sc-body">' +
+            '<h3 class="sc-title">' + escapeHtml(p.title) + '</h3>' +
+            '<div class="sc-price">&#8358;' + Number(p.price).toLocaleString() + ' <span style="font-size: 0.75rem; font-weight: 400; color: var(--ink-muted);">per ' + escapeHtml(p.unit) + '</span></div>' +
+            '<div class="sc-loc">' + escapeHtml(p.location_state || 'Nigeria') + '</div>' +
+          '</div>' +
+        '</a>';
+      grid.appendChild(card);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(grid);
+
+    // Wire up remove buttons
+    container.querySelectorAll('.sc-remove').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.productId!;
+        const { error } = await supabase
+          .from('saved_listings')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', Number(id));
+        if (!error) {
+          const card = (btn as HTMLElement).closest('.saved-card') as HTMLElement;
+          card?.remove();
+          if (container.querySelectorAll('.saved-card').length === 0) {
+            load();
+          }
+        }
+      });
+    });
+  }
+
+  load();
+</script>

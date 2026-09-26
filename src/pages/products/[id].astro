@@ -71,9 +71,14 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
       </div>
 
       <div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
-          <h1 style="font-family: var(--display); font-size: 2rem; margin: 0; color: var(--ink);">{product.title}</h1>
-          <span style="font-size: 12px; padding: 4px 12px; border-radius: var(--r-full); background: var(--cyan-soft); color: var(--cyan); font-family: var(--mono);">Verified</span>
+        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+          <h1 style="font-family: var(--display); font-size: 2rem; margin: 0; color: var(--ink); flex: 1; min-width: 200px;">{product.title}</h1>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; padding: 4px 12px; border-radius: var(--r-full); background: var(--cyan-soft); color: var(--cyan); font-family: var(--mono);">Verified</span>
+            <button class="pdp-save-btn" data-save-btn data-product-id={product.id} aria-label="Save product" title="Save to my list">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+          </div>
         </div>
 
         <p style="font-size: 1.5rem; font-family: var(--display); font-weight: 700; color: var(--cyan); margin: 0 0 8px 0;">
@@ -131,6 +136,11 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
       <p id="comments-loading" style="text-align: center; padding: 30px; color: var(--ink-muted); font-family: var(--mono); font-size: 12px;">Loading comments...</p>
     </div>
   </div>
+
+<script>
+  import { initSaveButtons } from '../../scripts/saved';
+  initSaveButtons();
+</script>
 </Layout>
 
 <style is:global>
