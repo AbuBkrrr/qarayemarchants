@@ -7,6 +7,20 @@ import Layout from '../../layouts/Layout.astro';
     <h1 style="font-family: var(--display); font-size: 2rem; margin-bottom: 8px; color: var(--ink);">Merchant Profile</h1>
     <p style="color: var(--ink-muted); margin-bottom: 32px;">This information appears on every listing you publish. Buyers use it to contact you.</p>
 
+    <!-- Avatar Section -->
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;">
+      <div id="avatar-preview" style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--violet)); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid var(--line); overflow: hidden; position: relative; transition: 0.2s;">
+        <span id="avatar-initial" style="font-family: var(--display); font-weight: 800; font-size: 42px; color: var(--bg-950);">U</span>
+      </div>
+      <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
+      <div style="margin-top: 16px; display: flex; gap: 8px;">
+        <button type="button" id="avatar-upload-btn" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px;">Upload Photo</button>
+        <button type="button" id="avatar-remove-btn" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px; display: none;">Remove</button>
+      </div>
+      <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 8px;">JPG, PNG or WEBP - Max 2MB</p>
+      <p id="avatar-status" style="font-family: var(--mono); font-size: 11px; margin-top: 6px;"></p>
+    </div>
+
     <form id="profile-form" style="display: flex; flex-direction: column; gap: 20px;">
       <div>
         <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BUSINESS NAME *</label>
@@ -57,7 +71,28 @@ import Layout from '../../layouts/Layout.astro';
   import { supabase } from '../../lib/supabase';
 
   const form = document.getElementById('profile-form') as HTMLFormElement;
-  const statusEl = document.getElementById('status');
+  const statusEl = document.getElementById('status')!;
+  const avatarPreview = document.getElementById('avatar-preview') as HTMLDivElement;
+  const avatarInitial = document.getElementById('avatar-initial') as HTMLSpanElement;
+  const avatarInput = document.getElementById('avatar-input') as HTMLInputElement;
+  const avatarUploadBtn = document.getElementById('avatar-upload-btn') as HTMLButtonElement;
+  const avatarRemoveBtn = document.getElementById('avatar-remove-btn') as HTMLButtonElement;
+  const avatarStatus = document.getElementById('avatar-status')!;
+
+  let currentAvatarUrl: string | null = null;
+  let pendingAvatarFile: File | null = null;
+
+  function showAvatar(url: string | null, fallbackInitial: string) {
+    if (url) {
+      avatarPreview.innerHTML = '<img src="' + url + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+      avatarPreview.style.background = 'transparent';
+      avatarRemoveBtn.style.display = 'inline-flex';
+    } else {
+      avatarPreview.innerHTML = '<span id="avatar-initial" style="font-family: var(--display); font-weight: 800; font-size: 42px; color: var(--bg-950);">' + fallbackInitial + '</span>';
+      avatarPreview.style.background = 'linear-gradient(135deg, var(--cyan), var(--violet))';
+      avatarRemoveBtn.style.display = 'none';
+    }
+  }
 
   async function loadProfile() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -74,8 +109,54 @@ import Layout from '../../layouts/Layout.astro';
       (document.getElementById('whatsapp') as HTMLInputElement).value = data.whatsapp || '';
       (document.getElementById('state') as HTMLInputElement).value = data.state || '';
       (document.getElementById('bio') as HTMLTextAreaElement).value = data.bio || '';
+      currentAvatarUrl = data.avatar_url || null;
+      const initial = (data.business_name || data.owner_name || user.email || 'U').charAt(0).toUpperCase();
+      showAvatar(currentAvatarUrl, initial);
     }
   }
+
+  // Avatar upload interactions
+  avatarPreview.addEventListener('click', () => avatarInput.click());
+  avatarUploadBtn.addEventListener('click', () => avatarInput.click());
+
+  avatarInput.addEventListener('change', () => {
+    const file = avatarInput.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      avatarStatus.textContent = 'Error: Image exceeds 2MB.';
+      avatarStatus.style.color = 'var(--red)';
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      avatarStatus.textContent = 'Error: Only JPG, PNG, or WEBP allowed.';
+      avatarStatus.style.color = 'var(--red)';
+      return;
+    }
+
+    pendingAvatarFile = file;
+    avatarStatus.textContent = '';
+    const previewUrl = URL.createObjectURL(file);
+    showAvatar(previewUrl, 'U');
+  });
+
+  avatarRemoveBtn.addEventListener('click', async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (currentAvatarUrl) {
+      const path = currentAvatarUrl.split('/avatars/')[1]?.split('?')[0];
+      if (path) await supabase.storage.from('avatars').remove([path]);
+    }
+
+    await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
+    currentAvatarUrl = null;
+    pendingAvatarFile = null;
+    showAvatar(null, 'U');
+    avatarStatus.textContent = 'Avatar removed.';
+    avatarStatus.style.color = 'var(--green)';
+    setTimeout(() => window.location.reload(), 800);
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -89,8 +170,40 @@ import Layout from '../../layouts/Layout.astro';
       return;
     }
 
+    // Upload pending avatar if any
+    let newAvatarUrl = currentAvatarUrl;
+    if (pendingAvatarFile) {
+      avatarStatus.textContent = 'Uploading avatar...';
+      avatarStatus.style.color = 'var(--ink-muted)';
+      const ext = pendingAvatarFile.name.split('.').pop();
+      const fileName = user.id + '/avatar-' + Date.now() + '.' + ext;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, pendingAvatarFile, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) {
+        statusEl.textContent = 'Error uploading avatar: ' + uploadError.message;
+        statusEl.style.color = 'var(--red)';
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      newAvatarUrl = urlData.publicUrl;
+
+      // Best-effort cleanup of old avatar
+      if (currentAvatarUrl) {
+        const oldPath = currentAvatarUrl.split('/avatars/')[1]?.split('?')[0];
+        if (oldPath) await supabase.storage.from('avatars').remove([oldPath]);
+      }
+
+      pendingAvatarFile = null;
+      avatarStatus.textContent = 'Avatar uploaded.';
+      avatarStatus.style.color = 'var(--green)';
+    }
+
     const formData = new FormData(form);
-    const payload = {
+    const payload: Record<string, unknown> = {
       id: user.id,
       business_name: formData.get('business_name'),
       owner_name: formData.get('owner_name'),
@@ -98,6 +211,7 @@ import Layout from '../../layouts/Layout.astro';
       whatsapp: formData.get('whatsapp'),
       state: formData.get('state'),
       bio: formData.get('bio'),
+      avatar_url: newAvatarUrl,
       updated_at: new Date().toISOString()
     };
 
@@ -108,6 +222,7 @@ import Layout from '../../layouts/Layout.astro';
     } else {
       statusEl.textContent = 'Profile saved successfully.';
       statusEl.style.color = 'var(--green)';
+      setTimeout(() => window.location.reload(), 800);
     }
   });
 
