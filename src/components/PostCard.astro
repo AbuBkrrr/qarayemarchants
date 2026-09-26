@@ -1,172 +1,281 @@
 ---
-interface Props {
+export interface PostCardItem {
   type: 'community' | 'news';
   id: string;
   title: string;
-  description?: string;
-  thumbnailUrl?: string | null;
-  mediaType?: 'image' | 'audio' | 'video' | 'none';
+  description: string;
+  thumbnailUrl: string | null;
+  mediaType: 'image' | 'audio' | 'video' | 'none';
   authorName?: string;
   sourceName?: string;
   publishedAt: string;
-  commentCount?: number;
+  commentCount: number;
   href: string;
 }
 
-const {
-  type,
-  title,
-  description,
-  thumbnailUrl,
-  mediaType = 'none',
-  authorName,
-  sourceName,
-  publishedAt,
-  commentCount = 0,
-  href,
-} = Astro.props;
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return m + 'm ago';
-  const h = Math.floor(m / 60);
-  if (h < 24) return h + 'h ago';
-  const d = Math.floor(h / 24);
-  if (d < 7) return d + 'd ago';
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+interface Props {
+  item: PostCardItem;
+  layout?: 'card' | 'list';
 }
+
+const { item, layout = 'card' } = Astro.props;
+
+function timeAgo(iso: string) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+  return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+const isCommunity = item.type === 'community';
+const badgeLabel = isCommunity ? 'COMMUNITY' : 'NEWS';
 ---
 
-<a href={href} class:list={['qm-card', 'qm-card-' + type]}>
-  {type === 'news' && (
-    <div class="qm-card-media qm-card-media-tall">
-      {thumbnailUrl ? (
-        <img src={thumbnailUrl} alt={title} loading="lazy" decoding="async" />
-      ) : (
-        <div class="qm-news-gradient"></div>
+<a href={item.href} class:list={['post-card', `layout-${layout}`]}>
+  {layout === 'card' ? (
+    <>
+      {item.thumbnailUrl && item.mediaType !== 'none' && (
+        <div class="pc-media">
+          {item.mediaType === 'video' ? (
+            <video src={item.thumbnailUrl} muted></video>
+          ) : (
+            <img src={item.thumbnailUrl} alt={item.title} loading="lazy" />
+          )}
+        </div>
       )}
-      <span class="qm-badge qm-badge-news">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
-        <span data-i18n="tabNews">News</span>
-      </span>
-    </div>
+      <div class="pc-body">
+        <div class="pc-top">
+          <span class:list={['pc-badge', isCommunity ? 'badge-community' : 'badge-news']}>
+            {badgeLabel}
+          </span>
+          <span class="pc-time">{timeAgo(item.publishedAt)}</span>
+        </div>
+        <h3 class="pc-title">{item.title}</h3>
+        {item.description && <p class="pc-desc">{item.description}</p>}
+        <div class="pc-meta">
+          <span class="pc-author">
+            {isCommunity ? (item.authorName || 'Member') : (item.sourceName || 'Source')}
+          </span>
+          <span class="pc-comments">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {item.commentCount || 0}
+          </span>
+        </div>
+      </div>
+    </>
+  ) : (
+    <>
+      <div class="pc-list-media">
+        {item.thumbnailUrl && item.mediaType !== 'none' ? (
+          item.mediaType === 'video' ? (
+            <video src={item.thumbnailUrl} muted></video>
+          ) : (
+            <img src={item.thumbnailUrl} alt={item.title} loading="lazy" />
+          )
+        ) : (
+          <div class="pc-list-placeholder">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+        )}
+      </div>
+      <div class="pc-list-body">
+        <div class="pc-top">
+          <span class:list={['pc-badge', isCommunity ? 'badge-community' : 'badge-news']}>
+            {badgeLabel}
+          </span>
+          <span class="pc-time">{timeAgo(item.publishedAt)}</span>
+        </div>
+        <h3 class="pc-title">{item.title}</h3>
+        {item.description && <p class="pc-desc">{item.description}</p>}
+        <div class="pc-meta">
+          <span class="pc-author">
+            {isCommunity ? (item.authorName || 'Member') : (item.sourceName || 'Source')}
+          </span>
+          <span class="pc-comments">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {item.commentCount || 0}
+          </span>
+        </div>
+      </div>
+    </>
   )}
-
-  {type === 'community' && thumbnailUrl && (
-    <div class="qm-card-media">
-      <img src={thumbnailUrl} alt={title} loading="lazy" decoding="async" />
-      <span class="qm-badge qm-badge-community">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <span data-i18n="tabCommunity">Community</span>
-      </span>
-    </div>
-  )}
-
-  {type === 'community' && !thumbnailUrl && (
-    <div class="qm-card-media qm-card-media-text">
-      <span class="qm-badge qm-badge-community">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <span data-i18n="tabCommunity">Community</span>
-      </span>
-    </div>
-  )}
-
-  <div class="qm-card-body">
-    <h3>{title}</h3>
-    {description && <p>{description}</p>}
-    <div class="qm-card-meta">
-      {type === 'community' && authorName && (
-        <span class="qm-meta-author">by <b>{authorName}</b></span>
-      )}
-      {type === 'news' && sourceName && (
-        <span class="qm-meta-source">{sourceName}</span>
-      )}
-      <span class="qm-meta-dot"></span>
-      <span class="qm-meta-time">{timeAgo(publishedAt)}</span>
-      <span class="qm-meta-spacer"></span>
-      <span class="qm-meta-stat">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        {commentCount}
-      </span>
-    </div>
-  </div>
 </a>
 
-<style>
-  .qm-card {
-    background: var(--bg-900);
-    border: 1px solid var(--line-soft);
+<style is:global>
+  .post-card {
+    text-decoration: none;
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: var(--r-lg);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: 0.2s;
-    text-decoration: none;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
     color: inherit;
   }
-  .qm-card:hover {
-    border-color: var(--line);
-    transform: translateY(-3px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 229, 255, 0.08);
+  .post-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cyan);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     opacity: 1;
   }
-  .qm-card-media {
-    position: relative;
+
+  /* CARD LAYOUT */
+  .post-card.layout-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .layout-card .pc-media {
+    width: 100%;
     aspect-ratio: 16 / 9;
-    background: var(--bg-850);
+    max-height: 200px;
+    overflow: hidden;
+    background: var(--bg-800);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .layout-card .pc-media img,
+  .layout-card .pc-media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .layout-card .pc-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* LIST LAYOUT */
+  .post-card.layout-list {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+  }
+  .layout-list .pc-list-media {
+    width: 140px;
+    min-width: 140px;
+    height: 110px;
+    background: var(--bg-800);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-right: 1px solid var(--line-soft);
+  }
+  .layout-list .pc-list-media img,
+  .layout-list .pc-list-media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .layout-list .pc-list-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .layout-list .pc-list-body {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* SHARED ELEMENTS */
+  .pc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .pc-badge {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: var(--r-full);
+  }
+  .badge-community {
+    background: var(--cyan-soft);
+    color: var(--cyan);
+  }
+  .badge-news {
+    background: var(--violet-soft);
+    color: var(--violet);
+  }
+  .pc-time {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .pc-title {
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .qm-card-media-tall { aspect-ratio: 16 / 7; }
-  .qm-card-media-text { display: none; }
-  .qm-card-media img { width: 100%; height: 100%; object-fit: cover; }
-  .qm-news-gradient {
-    width: 100%; height: 100%;
-    background: linear-gradient(135deg, #0a0f1d 0%, #1c2540 50%, #0891a8 100%);
+  .pc-desc {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    margin: 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .qm-badge {
-    position: absolute; top: 12px; left: 12px;
-    display: inline-flex; align-items: center; gap: 5px;
-    font-family: var(--mono); font-size: 10px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    padding: 5px 10px; border-radius: var(--r-full);
-    backdrop-filter: blur(10px);
+  .layout-list .pc-desc {
+    -webkit-line-clamp: 1;
   }
-  .qm-badge-community {
-    background: rgba(0, 229, 255, 0.2); color: var(--cyan);
-    border: 1px solid rgba(0, 229, 255, 0.4);
-  }
-  .qm-badge-news {
-    background: rgba(139, 92, 246, 0.2); color: var(--violet);
-    border: 1px solid rgba(139, 92, 246, 0.4);
-  }
-  .qm-card-body {
-    padding: 18px 20px 20px;
-    display: flex; flex-direction: column; gap: 10px; flex: 1;
-  }
-  .qm-card-body h3 {
-    font-family: var(--display); font-size: 1.08rem; font-weight: 600;
-    color: var(--ink); margin: 0; line-height: 1.35; letter-spacing: -0.01em;
-  }
-  .qm-card-body p {
-    color: var(--ink-muted); font-size: 0.88rem; line-height: 1.55;
-    margin: 0; flex: 1;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .qm-card-meta {
-    display: flex; align-items: center; gap: 8px;
-    padding-top: 14px; margin-top: auto;
+  .pc-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
     border-top: 1px solid var(--line-soft);
-    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
   }
-  .qm-meta-author b { color: var(--ink-muted); font-weight: 600; }
-  .qm-meta-source {
-    color: var(--violet); text-transform: uppercase;
-    letter-spacing: 0.05em; font-size: 10px;
+  .pc-author {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .qm-meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-faint); }
-  .qm-meta-spacer { flex: 1; }
-  .qm-meta-stat { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-muted); }
-  .qm-meta-stat svg { width: 13px; height: 13px; }
+  .pc-comments {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 500px) {
+    .layout-list .pc-list-media {
+      width: 100px;
+      min-width: 100px;
+      height: 90px;
+    }
+  }
 </style>
