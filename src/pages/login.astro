@@ -1,166 +1,132 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { createSupabaseServerClient } from '../lib/auth';
-
-const url = Astro.url;
-const rawNext = url.searchParams.get('next') || '/';
-const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
-const mode = url.searchParams.get('mode') === 'signup' ? 'signup' : 'login';
-
-const authClient = createSupabaseServerClient(Astro.cookies);
-const { data: { user } } = await authClient.auth.getUser();
-if (user) {
-  return Astro.redirect(next);
-}
 ---
 
-<Layout title="Sign In | Qaraye Marchants">
-  <div class="auth-wrap">
-    <div class="auth-card">
-
-      <a href="/" class="auth-back">Back to feed</a>
-
-      <div class="auth-header">
-        <h1>{mode === 'signup' ? 'Create your account' : 'Sign in'}</h1>
-        <p>{mode === 'signup' ? 'Join the community.' : 'Welcome back.'}</p>
-      </div>
-
-      <div class="auth-tabs">
-        <a href="/login" class:list={['auth-tab', mode === 'login' && 'active']}>Sign in</a>
-        <a href="/login?mode=signup" class:list={['auth-tab', mode === 'signup' && 'active']}>Sign up</a>
-      </div>
-
-      <form id="auth-form" data-mode={mode} data-next={next} novalidate>
-
-        {mode === 'signup' && (
-          <div class="form-field">
-            <label for="display_name">Display name</label>
-            <input type="text" id="display_name" required minlength="2" maxlength="60" placeholder="e.g. Ada Obi" />
-          </div>
-        )}
-
-        <div class="form-field">
-          <label for="email">Email</label>
-          <input type="email" id="email" required placeholder="you@example.com" />
-        </div>
-
-        <div class="form-field">
-          <label for="password">Password</label>
-          <input type="password" id="password" required minlength="6" placeholder="At least 6 characters" />
-        </div>
-
-        <p class="auth-error" id="auth-error" hidden></p>
-
-        <button type="submit" class="btn btn-primary auth-submit" id="auth-submit">
-          {mode === 'signup' ? 'Create account' : 'Sign in'}
-        </button>
-      </form>
-
+<Layout title="Sign In - Qaraye Marchants">
+  <div class="container" style="padding: 60px 24px; max-width: 460px;">
+    <div style="display: flex; gap: 4px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full); margin-bottom: 32px;">
+      <button id="tab-signin" style="flex: 1; padding: 10px; border-radius: var(--r-full); background: var(--cyan); color: var(--bg-950); border: none; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 13px;">Sign In</button>
+      <button id="tab-signup" style="flex: 1; padding: 10px; border-radius: var(--r-full); background: transparent; color: var(--ink-muted); border: none; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 13px;">Sign Up</button>
     </div>
+
+    <form id="signin-form" style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">EMAIL</label>
+        <input type="email" id="signin-email" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PASSWORD</label>
+        <input type="password" id="signin-password" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+      <button type="submit" class="btn btn-primary" style="padding: 14px;">Sign In</button>
+    </form>
+
+    <form id="signup-form" style="display: none; flex-direction: column; gap: 16px;">
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PHONE NUMBER *</label>
+        <input type="tel" id="signup-phone" required placeholder="0803 123 4567" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 4px;">Required. Used for account recovery and merchant verification.</p>
+      </div>
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">EMAIL (Optional)</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PASSWORD *</label>
+        <input type="password" id="signup-password" required minlength="6" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+      <button type="submit" class="btn btn-primary" style="padding: 14px;">Create Account</button>
+    </form>
+
+    <p id="auth-status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px; text-align: center;"></p>
   </div>
 </Layout>
-
-<style>
-  .auth-wrap { padding: 60px 20px 80px; display: flex; justify-content: center; }
-  .auth-card {
-    width: 100%; max-width: 440px;
-    background: var(--bg-900); border: 1px solid var(--line-soft);
-    border-radius: var(--r-lg); padding: 32px;
-  }
-  .auth-back {
-    display: inline-block; font-family: var(--mono); font-size: 12px;
-    color: var(--ink-faint); text-decoration: none; margin-bottom: 20px;
-  }
-  .auth-back:hover { color: var(--cyan); }
-  .auth-header { margin-bottom: 24px; }
-  .auth-header h1 {
-    font-family: var(--display); font-size: 1.5rem;
-    font-weight: 700; color: var(--ink); margin: 0 0 8px;
-  }
-  .auth-header p { color: var(--ink-muted); font-size: 0.92rem; margin: 0; }
-
-  .auth-tabs {
-    display: flex; background: var(--bg-850); border: 1px solid var(--line-soft);
-    border-radius: var(--r-md); padding: 4px; margin-bottom: 24px;
-  }
-  .auth-tab {
-    flex: 1; text-align: center; padding: 9px;
-    font-family: var(--mono); font-size: 12.5px; font-weight: 600;
-    color: var(--ink-muted); border-radius: var(--r-sm);
-    text-decoration: none; transition: 0.15s;
-  }
-  .auth-tab:hover { color: var(--ink); }
-  .auth-tab.active { background: var(--cyan-soft); color: var(--cyan); }
-
-  .form-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
-  .form-field label {
-    font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--ink-muted);
-  }
-  .form-field input {
-    background: var(--bg-850); border: 1px solid var(--line-soft);
-    border-radius: var(--r-sm); color: var(--ink);
-    font-family: var(--body); font-size: 15px; padding: 12px 14px;
-    transition: border-color 0.15s;
-  }
-  .form-field input:focus { outline: none; border-color: var(--cyan); }
-  .form-field input::placeholder { color: var(--ink-faint); }
-
-  .auth-error {
-    color: var(--red); background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: var(--r-sm); padding: 10px 14px;
-    font-size: 0.88rem; margin: 0 0 16px;
-  }
-  .auth-submit { width: 100%; justify-content: center; padding: 13px; }
-  .auth-submit:disabled { opacity: 0.6; cursor: wait; }
-</style>
 
 <script>
   import { supabase } from '../lib/supabase';
 
-  const form = document.getElementById('auth-form') as HTMLFormElement;
-  const submitBtn = document.getElementById('auth-submit') as HTMLButtonElement;
-  const errorEl = document.getElementById('auth-error') as HTMLParagraphElement;
+  const tabSignin = document.getElementById('tab-signin') as HTMLButtonElement;
+  const tabSignup = document.getElementById('tab-signup') as HTMLButtonElement;
+  const signinForm = document.getElementById('signin-form') as HTMLFormElement;
+  const signupForm = document.getElementById('signup-form') as HTMLFormElement;
+  const statusEl = document.getElementById('auth-status')!;
 
-  form?.addEventListener('submit', async (e) => {
+  tabSignin.addEventListener('click', () => {
+    tabSignin.style.background = 'var(--cyan)';
+    tabSignin.style.color = 'var(--bg-950)';
+    tabSignup.style.background = 'transparent';
+    tabSignup.style.color = 'var(--ink-muted)';
+    signinForm.style.display = 'flex';
+    signupForm.style.display = 'none';
+    statusEl.textContent = '';
+  });
+
+  tabSignup.addEventListener('click', () => {
+    tabSignup.style.background = 'var(--cyan)';
+    tabSignup.style.color = 'var(--bg-950)';
+    tabSignin.style.background = 'transparent';
+    tabSignin.style.color = 'var(--ink-muted)';
+    signupForm.style.display = 'flex';
+    signinForm.style.display = 'none';
+    statusEl.textContent = '';
+  });
+
+  signinForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    errorEl.hidden = true;
-
-    const mode = form.dataset.mode!;
-    const next = form.dataset.next || '/';
-    const email = (document.getElementById('email') as HTMLInputElement).value.trim();
-    const password = (document.getElementById('password') as HTMLInputElement).value;
-    const displayNameInput = document.getElementById('display_name') as HTMLInputElement | null;
-    const displayName = displayNameInput ? displayNameInput.value.trim() : '';
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = mode === 'signup' ? 'Creating...' : 'Signing in...';
-
-    if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { display_name: displayName || email.split('@')[0] } },
-      });
-      if (error) {
-        errorEl.textContent = error.message;
-        errorEl.hidden = false;
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create account';
-        return;
-      }
-      window.location.href = next;
+    statusEl.textContent = 'Signing in...';
+    statusEl.style.color = 'var(--ink-muted)';
+    const email = (document.getElementById('signin-email') as HTMLInputElement).value;
+    const password = (document.getElementById('signin-password') as HTMLInputElement).value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        errorEl.textContent = error.message;
-        errorEl.hidden = false;
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign in';
-        return;
-      }
-      window.location.href = next;
+      statusEl.textContent = 'Success! Redirecting...';
+      statusEl.style.color = 'var(--green)';
+      window.location.href = '/';
     }
+  });
+
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = 'Creating account...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const rawPhone = (document.getElementById('signup-phone') as HTMLInputElement).value;
+    const emailInput = (document.getElementById('signup-email') as HTMLInputElement).value.trim();
+    const password = (document.getElementById('signup-password') as HTMLInputElement).value;
+
+    const digits = rawPhone.replace(/[^0-9]/g, '');
+    if (digits.length < 10 || digits.length > 14) {
+      statusEl.textContent = 'Error: Please enter a valid phone number.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    const email = emailInput || `${digits}@qarayemarchants.local`;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { phone: digits } }
+    });
+
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        phone: digits,
+        whatsapp: digits.replace(/^0/, '234')
+      });
+    }
+
+    statusEl.textContent = 'Account created! You can now sign in.';
+    statusEl.style.color = 'var(--green)';
   });
 </script>
