@@ -8,14 +8,16 @@ import Layout from '../../layouts/Layout.astro';
     <p style="color: var(--ink-muted); margin-bottom: 32px;">Fill in the details below to list your agricultural product on the marketplace.</p>
 
     <form id="create-listing-form" style="display: flex; flex-direction: column; gap: 20px;">
+      <!-- Product Title -->
       <div>
-        <label for="title" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRODUCT TITLE</label>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRODUCT TITLE</label>
         <input type="text" id="title" name="title" required placeholder="e.g., Premium Long Grain Rice" 
                style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
       </div>
 
+      <!-- Category -->
       <div>
-        <label for="category" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">CATEGORY</label>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">CATEGORY</label>
         <select id="category" name="category" required 
                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
           <option value="">Select a category</option>
@@ -28,20 +30,22 @@ import Layout from '../../layouts/Layout.astro';
         </select>
       </div>
 
+      <!-- Description -->
       <div>
-        <label for="description" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">DESCRIPTION</label>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">DESCRIPTION</label>
         <textarea id="description" name="description" rows="4" placeholder="Describe your product, its quality, and any other important details..."
                   style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); resize: vertical;"></textarea>
       </div>
 
+      <!-- Price and Unit -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div>
-          <label for="price" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRICE (₦)</label>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRICE (₦)</label>
           <input type="number" id="price" name="price" required min="0" step="0.01" placeholder="50000"
                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
         </div>
         <div>
-          <label for="unit" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">UNIT</label>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">UNIT</label>
           <select id="unit" name="unit" required 
                   style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
             <option value="kg">Kilogram (kg)</option>
@@ -53,30 +57,52 @@ import Layout from '../../layouts/Layout.astro';
         </div>
       </div>
 
+      <!-- Quantity -->
       <div>
-        <label for="quantity" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">QUANTITY AVAILABLE</label>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">QUANTITY AVAILABLE</label>
         <input type="number" id="quantity" name="quantity" required min="1" placeholder="100"
                style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
       </div>
 
+      <!-- Location -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div>
-          <label for="location_state" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
           <input type="text" id="location_state" name="location_state" placeholder="e.g., Kano" 
                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
         </div>
         <div>
-          <label for="location_lga" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">LGA / AREA</label>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">LGA / AREA</label>
           <input type="text" id="location_lga" name="location_lga" placeholder="e.g., Dawanau" 
                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary" style="margin-top: 8px; padding: 14px 24px; font-size: 15px;">
+      <!-- MEDIA UPLOAD SECTION -->
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PRODUCT MEDIA (Max 5 files, videos must be ≤ 10 seconds)</label>
+        <div id="drop-zone" style="border: 2px dashed var(--line-strong); border-radius: var(--r-md); padding: 30px; text-align: center; cursor: pointer; background: var(--bg-850); transition: 0.2s;">
+          <input type="file" id="file-input" multiple accept="image/*,video/mp4,video/webm,video/quicktime" style="display: none;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p style="margin: 0; font-family: var(--body); font-weight: 600; color: var(--ink);">Click to upload or drag and drop</p>
+          <p style="margin: 4px 0 0 0; font-family: var(--mono); font-size: 11px; color: var(--ink-faint);">JPG, PNG, WEBP, MP4, WEBM — up to 10MB each</p>
+        </div>
+        <div id="preview-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-top: 16px;"></div>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn btn-primary" style="margin-top: 8px; padding: 14px 24px; font-size: 15px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Publish Listing
       </button>
     </form>
+
+    <!-- Upload Progress -->
+    <div id="progress-container" style="display: none; margin-top: 20px;">
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 8px;">Uploading media...</div>
+      <div style="width: 100%; height: 8px; background: var(--bg-850); border-radius: 4px; overflow: hidden;">
+        <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--violet)); transition: width 0.2s;"></div>
+      </div>
+    </div>
 
     <p id="form-status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px;"></p>
   </div>
@@ -87,41 +113,202 @@ import Layout from '../../layouts/Layout.astro';
 
   const form = document.getElementById('create-listing-form') as HTMLFormElement;
   const statusEl = document.getElementById('form-status');
+  const dropZone = document.getElementById('drop-zone') as HTMLDivElement;
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const previewGrid = document.getElementById('preview-grid') as HTMLDivElement;
+  const progressContainer = document.getElementById('progress-container') as HTMLDivElement;
+  const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
 
-  form.addEventListener('submit', async (e) => {
+  let selectedFiles: File[] = [];
+
+  // --- Drag and Drop ---
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--cyan)'; });
+  dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--line-strong)'; });
+  dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
-    statusEl.textContent = 'Publishing your listing...';
-    statusEl.style.color = 'var(--ink-muted)';
+    dropZone.style.borderColor = 'var(--line-strong)';
+    if (e.dataTransfer?.files) handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files) handleFiles(fileInput.files); });
 
-    const formData = new FormData(form);
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      statusEl.textContent = 'Error: You must be logged in to publish a listing.';
-      statusEl.style.color = 'var(--red)';
-      return;
+  // --- File Handling & Validation ---
+  async function handleFiles(files: FileList) {
+    for (const file of Array.from(files)) {
+      if (selectedFiles.length >= 5) {
+        statusEl.textContent = 'Error: Maximum 5 files allowed.';
+        statusEl.style.color = 'var(--red)';
+        break;
+      }
+
+      // Validate video duration (max 10 seconds)
+      if (file.type.startsWith('video/')) {
+        const isValid = await validateVideoDuration(file);
+        if (!isValid) {
+          statusEl.textContent = `Error: Video "${file.name}" exceeds 10 seconds. Please trim it.`;
+          statusEl.style.color = 'var(--red)';
+          continue;
+        }
+      }
+
+      selectedFiles.push(file);
+      renderPreview(file, selectedFiles.length - 1);
+    }
+    fileInput.value = '';
+  }
+
+  function validateVideoDuration(file: File): Promise<boolean> {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(video.duration <= 10);
+      };
+      video.onerror = () => resolve(false);
+      video.src = URL.createObjectURL(file);
+    });
+  }
+
+  function renderPreview(file: File, index: number) {
+    const div = document.createElement('div');
+    div.style.position = 'relative';
+    div.style.borderRadius = 'var(--r-sm)';
+    div.style.overflow = 'hidden';
+    div.style.border = '1px solid var(--line-soft)';
+    div.style.aspectRatio = '1';
+
+    if (file.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      div.appendChild(img);
+    } else {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      video.muted = true;
+      div.appendChild(video);
+      
+      const badge = document.createElement('span');
+      badge.textContent = 'VIDEO';
+      badge.style.position = 'absolute';
+      badge.style.bottom = '4px';
+      badge.style.left = '4px';
+      badge.style.background = 'var(--cyan)';
+      badge.style.color = 'var(--bg-950)';
+      badge.style.fontSize = '9px';
+      badge.style.fontFamily = 'var(--mono)';
+      badge.style.padding = '2px 6px';
+      badge.style.borderRadius = '4px';
+      badge.style.fontWeight = 'bold';
+      div.appendChild(badge);
     }
 
-    const { error } = await supabase.from('products').insert({
-      seller_id: user.id,
-      title: formData.get('title'),
-      description: formData.get('description'),
-      category: formData.get('category'),
-      price: parseFloat(formData.get('price') as string),
-      unit: formData.get('unit'),
-      quantity: parseInt(formData.get('quantity') as string),
-      location_state: formData.get('location_state'),
-      location_lga: formData.get('location_lga'),
-      image_urls: []
-    });
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = '×';
+    removeBtn.style.position = 'absolute';
+    removeBtn.style.top = '4px';
+    removeBtn.style.right = '4px';
+    removeBtn.style.width = '20px';
+    removeBtn.style.height = '20px';
+    removeBtn.style.borderRadius = '50%';
+    removeBtn.style.background = 'var(--red)';
+    removeBtn.style.color = 'white';
+    removeBtn.style.border = 'none';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.style.fontSize = '14px';
+    removeBtn.style.lineHeight = '1';
+    removeBtn.onclick = () => {
+      selectedFiles.splice(index, 1);
+      previewGrid.innerHTML = '';
+      selectedFiles.forEach((f, i) => renderPreview(f, i));
+    };
+    div.appendChild(removeBtn);
 
-    if (error) {
-      statusEl.textContent = 'Error: ' + error.message;
-      statusEl.style.color = 'var(--red)';
-    } else {
+    previewGrid.appendChild(div);
+  }
+
+  // --- Upload to Supabase Storage ---
+  async function uploadMedia(files: File[], userId: string): Promise<string[]> {
+    const urls: string[] = [];
+    const total = files.length;
+
+    for (let i = 0; i < total; i++) {
+      const file = files[i];
+      const ext = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}-${i}.${ext}`;
+
+      const { data, error } = await supabase.storage
+        .from('product-media')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+      if (error) throw new Error(`Upload failed: ${error.message}`);
+
+      const { data: urlData } = supabase.storage.from('product-media').getPublicUrl(data.path);
+      urls.push(urlData.publicUrl);
+
+      const percent = Math.round(((i + 1) / total) * 100);
+      progressBar.style.width = `${percent}%`;
+    }
+
+    return urls;
+  }
+
+  // --- Form Submission ---
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = '';
+    submitBtn.disabled = true;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to publish a listing.');
+
+      let mediaUrls: string[] = [];
+      if (selectedFiles.length > 0) {
+        progressContainer.style.display = 'block';
+        statusEl.textContent = 'Uploading media...';
+        statusEl.style.color = 'var(--ink-muted)';
+        mediaUrls = await uploadMedia(selectedFiles, user.id);
+      }
+
+      statusEl.textContent = 'Saving listing...';
+      const formData = new FormData(form);
+
+      const { error } = await supabase.from('products').insert({
+        seller_id: user.id,
+        title: formData.get('title'),
+        description: formData.get('description'),
+        category: formData.get('category'),
+        price: parseFloat(formData.get('price') as string),
+        unit: formData.get('unit'),
+        quantity: parseInt(formData.get('quantity') as string),
+        location_state: formData.get('location_state'),
+        location_lga: formData.get('location_lga'),
+        media_urls: mediaUrls
+      });
+
+      if (error) throw new Error(error.message);
+
       statusEl.textContent = 'Success! Your listing has been published.';
       statusEl.style.color = 'var(--green)';
       form.reset();
+      selectedFiles = [];
+      previewGrid.innerHTML = '';
+      progressContainer.style.display = 'none';
+      progressBar.style.width = '0%';
+
+    } catch (err: any) {
+      statusEl.textContent = 'Error: ' + err.message;
+      statusEl.style.color = 'var(--red)';
+    } finally {
+      submitBtn.disabled = false;
     }
   });
 </script>
