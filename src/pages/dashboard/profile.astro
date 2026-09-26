@@ -1,0 +1,115 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Merchant Profile - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 700px;">
+    <h1 style="font-family: var(--display); font-size: 2rem; margin-bottom: 8px; color: var(--ink);">Merchant Profile</h1>
+    <p style="color: var(--ink-muted); margin-bottom: 32px;">This information appears on every listing you publish. Buyers use it to contact you.</p>
+
+    <form id="profile-form" style="display: flex; flex-direction: column; gap: 20px;">
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BUSINESS NAME *</label>
+        <input type="text" id="business_name" name="business_name" required placeholder="e.g., Kano Agro Traders"
+               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">OWNER NAME</label>
+        <input type="text" id="owner_name" name="owner_name" placeholder="e.g., Abu Bakr"
+               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PHONE</label>
+          <input type="tel" id="phone" name="phone" placeholder="0803 123 4567"
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">WHATSAPP *</label>
+          <input type="tel" id="whatsapp" name="whatsapp" required placeholder="2348031234567"
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+          <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 4px;">Country code + number, no + or spaces</p>
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
+        <input type="text" id="state" name="state" placeholder="e.g., Kano"
+               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+      </div>
+
+      <div>
+        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BIO</label>
+        <textarea id="bio" name="bio" rows="3" placeholder="Tell buyers about your farm, business, or specialty..."
+                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); resize: vertical;"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="padding: 14px 24px; font-size: 15px;">Save Profile</button>
+    </form>
+
+    <p id="status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px;"></p>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const form = document.getElementById('profile-form') as HTMLFormElement;
+  const statusEl = document.getElementById('status');
+
+  async function loadProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      statusEl.textContent = 'You must be logged in.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if (data) {
+      (document.getElementById('business_name') as HTMLInputElement).value = data.business_name || '';
+      (document.getElementById('owner_name') as HTMLInputElement).value = data.owner_name || '';
+      (document.getElementById('phone') as HTMLInputElement).value = data.phone || '';
+      (document.getElementById('whatsapp') as HTMLInputElement).value = data.whatsapp || '';
+      (document.getElementById('state') as HTMLInputElement).value = data.state || '';
+      (document.getElementById('bio') as HTMLTextAreaElement).value = data.bio || '';
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = 'Saving...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      statusEl.textContent = 'Error: Not logged in.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    const formData = new FormData(form);
+    const payload = {
+      id: user.id,
+      business_name: formData.get('business_name'),
+      owner_name: formData.get('owner_name'),
+      phone: formData.get('phone'),
+      whatsapp: formData.get('whatsapp'),
+      state: formData.get('state'),
+      bio: formData.get('bio'),
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('profiles').upsert(payload);
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = 'Profile saved successfully.';
+      statusEl.style.color = 'var(--green)';
+    }
+  });
+
+  loadProfile();
+</script>
