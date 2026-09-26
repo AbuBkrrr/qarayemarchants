@@ -3,34 +3,43 @@ import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
 // Most-viewed active products
-const { data: trendingProducts, error: productsError } = await supabase
+const { data: trendingProducts } = await supabase
   .from('products')
   .select('id, title, price, unit, category, location_state, media_urls, image_urls, views, created_at')
   .eq('status', 'active')
   .order('views', { ascending: false, nullsFirst: false })
   .order('created_at', { ascending: false })
-  .limit(24);
+  .limit(20);
 
 const products = trendingProducts || [];
+
+// Recent news (ranked by publication date as proxy for trending)
+const { data: trendingNews } = await supabase
+  .from('qm_news')
+  .select('id, slug, title, description, source_name, published_at')
+  .order('published_at', { ascending: false })
+  .limit(20);
+
+const news = trendingNews || [];
 ---
 
-<Layout title="Trending - Qaraye Marchants" description="Most viewed products and trending items on Qaraye Marchants.">
+<Layout title="Trending - Qaraye Marchants" description="Most viewed products and trending news on Qaraye Marchants.">
   <div class="container" style="padding: 40px 24px;">
 
     <div style="margin-bottom: 40px;">
       <h1 style="font-family: var(--display); font-size: 2.2rem; margin: 0 0 8px 0; color: var(--ink);">Trending</h1>
-      <p style="color: var(--ink-muted); margin: 0;">What buyers are viewing right now on Qaraye Marchants.</p>
+      <p style="color: var(--ink-muted); margin: 0;">What buyers and readers are engaging with right now.</p>
     </div>
 
     <!-- TRENDING PRODUCTS -->
-    <section style="margin-bottom: 48px;">
+    <section style="margin-bottom: 56px;">
       <h2 style="font-family: var(--display); font-size: 1.4rem; margin: 0 0 20px 0; color: var(--ink); display: flex; align-items: center; gap: 10px;">
         <span style="color: var(--cyan); font-family: var(--mono);">#1</span> Most Viewed Products
       </h2>
 
       {products.length === 0 ? (
         <div style="text-align: center; padding: 60px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);">
-          <p style="color: var(--ink-muted); margin: 0 0 16px 0;">No products to rank yet. Start listing to see activity here.</p>
+          <p style="color: var(--ink-muted); margin: 0 0 16px 0;">No products to rank yet.</p>
           <a href="/dashboard/create-listing" class="btn btn-primary">Create a Listing</a>
         </div>
       ) : (
@@ -42,12 +51,11 @@ const products = trendingProducts || [];
             const rank = index + 1;
             return (
               <a href={`/products/${product.id}`}
-                 style="display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); text-decoration: none; transition: 0.15s;"
-                 onmouseover="this.style.borderColor='var(--cyan)';" onmouseout="this.style.borderColor='var(--card-border)';">
-                <div style={`width: 36px; text-align: center; font-family: var(--display); font-weight: 800; font-size: 1.3rem; flex-shrink: 0; color: ${rank <= 3 ? 'var(--cyan)' : 'var(--ink-faint)'};`}>
+                 style="display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); text-decoration: none; transition: 0.15s;">
+                <div style={`width: 40px; text-align: center; font-family: var(--display); font-weight: 800; font-size: 1.3rem; flex-shrink: 0; color: ${rank <= 3 ? 'var(--cyan)' : 'var(--ink-faint)'};`}>
                   {rank}
                 </div>
-                <div style="width: 56px; height: 56px; border-radius: var(--r-sm); overflow: hidden; background: var(--bg-800); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 60px; height: 60px; border-radius: var(--r-sm); overflow: hidden; background: var(--bg-800); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                   {primary ? (
                     isVideo ? (
                       <video src={primary} style="width: 100%; height: 100%; object-fit: cover;" muted></video>
@@ -73,14 +81,37 @@ const products = trendingProducts || [];
       )}
     </section>
 
-    <!-- TRENDING NEWS placeholder -->
+    <!-- TRENDING NEWS -->
     <section>
       <h2 style="font-family: var(--display); font-size: 1.4rem; margin: 0 0 20px 0; color: var(--ink); display: flex; align-items: center; gap: 10px;">
         <span style="color: var(--cyan); font-family: var(--mono);">#2</span> Trending News
       </h2>
-      <div style="text-align: center; padding: 40px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);">
-        <p style="color: var(--ink-muted); margin: 0; font-size: 0.9rem;">Trending news ranking will appear here once we connect the news source. Awaiting diagnostic results to wire it up.</p>
-      </div>
+
+      {news.length === 0 ? (
+        <div style="text-align: center; padding: 60px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);">
+          <p style="color: var(--ink-muted); margin: 0;">No news published yet.</p>
+        </div>
+      ) : (
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {news.map((item, index) => {
+            const rank = index + 1;
+            return (
+              <a href={`/news/${item.slug}`}
+                 style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); text-decoration: none; transition: 0.15s;">
+                <div style={`width: 40px; text-align: center; font-family: var(--display); font-weight: 800; font-size: 1.3rem; flex-shrink: 0; color: ${rank <= 3 ? 'var(--violet)' : 'var(--ink-faint)'};`}>
+                  {rank}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-family: var(--display); font-weight: 600; font-size: 0.98rem; color: var(--ink); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{item.title}</div>
+                  <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">
+                    {item.source_name || 'News'} &bull; {new Date(item.published_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
     </section>
 
   </div>
