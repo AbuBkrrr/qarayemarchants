@@ -1,0 +1,253 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Moderation - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 1000px;">
+
+    <div id="guard" style="text-align: center; padding: 80px 20px; color: var(--ink-muted); font-family: var(--mono); font-size: 12px;">
+      Checking permissions...
+    </div>
+
+    <div id="content" style="display: none;">
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 6px 0; color: var(--ink);">Moderation Queue</h1>
+          <p style="color: var(--ink-muted); margin: 0;">Review comments flagged for hidden contact information.</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px;">
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px;">
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 8px;">FLAGGED</div>
+          <div id="stat-flagged" style="font-family: var(--display); font-size: 2rem; font-weight: 700; color: var(--red);">-</div>
+        </div>
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px;">
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 8px;">CLEARED</div>
+          <div id="stat-cleared" style="font-family: var(--display); font-size: 2rem; font-weight: 700; color: var(--green);">-</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div id="tabs" style="display: flex; gap: 4px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full); margin-bottom: 24px; width: fit-content;">
+        <button class="tab active" data-tab="flagged" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--r-full); border: none; cursor: pointer; background: var(--red); color: white;">Flagged</button>
+        <button class="tab" data-tab="cleared" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);">Cleared</button>
+        <button class="tab" data-tab="all" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);">All</button>
+      </div>
+
+      <div id="queue"></div>
+
+    </div>
+
+  </div>
+</Layout>
+
+<style is:global>
+  .mod-card {
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-lg);
+    margin-bottom: 12px;
+  }
+  .mod-card.flagged {
+    border-left: 4px solid var(--red);
+  }
+  .mod-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .mod-author {
+    font-family: var(--display);
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 0.95rem;
+  }
+  .mod-time {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+  .mod-body {
+    font-size: 0.92rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+    padding: 12px;
+    background: var(--bg-850);
+    border-radius: var(--r-sm);
+    word-wrap: break-word;
+  }
+  .mod-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .hidden-badge {
+    background: var(--red);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+</style>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const guard = document.getElementById('guard')!;
+  const contentEl = document.getElementById('content')!;
+  const queue = document.getElementById('queue')!;
+  const tabs = document.querySelectorAll('.tab');
+
+  let allComments: any[] = [];
+  let currentTab = 'flagged';
+
+  function escapeHtml(s: string) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  function highlightHidden(text: string) {
+    return escapeHtml(text)
+      .replace(/\[phone hidden\]/g, '<span class="hidden-badge">PHONE HIDDEN</span>')
+      .replace(/\[email hidden\]/g, '<span class="hidden-badge">EMAIL HIDDEN</span>')
+      .replace(/\[link hidden\]/g, '<span class="hidden-badge">LINK HIDDEN</span>');
+  }
+
+  function timeAgo(iso: string) {
+    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+    return new Date(iso).toLocaleDateString();
+  }
+
+  async function checkAdmin() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      guard.innerHTML = '<p style="color: var(--red);">Not signed in. <a href="/login" style="color: var(--cyan);">Sign in</a></p>';
+      return false;
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.is_admin) {
+      guard.innerHTML = '<p style="color: var(--red);">Access denied. This page is for administrators only.</p>';
+      return false;
+    }
+    return true;
+  }
+
+  function renderStats() {
+    const flagged = allComments.filter(c => c.is_flagged).length;
+    const cleared = allComments.filter(c => !c.is_flagged).length;
+    document.getElementById('stat-flagged')!.textContent = String(flagged);
+    document.getElementById('stat-cleared')!.textContent = String(cleared);
+  }
+
+  function render() {
+    let filtered = allComments;
+    if (currentTab === 'flagged') filtered = allComments.filter(c => c.is_flagged);
+    if (currentTab === 'cleared') filtered = allComments.filter(c => !c.is_flagged);
+
+    if (filtered.length === 0) {
+      queue.innerHTML = '<div style="text-align: center; padding: 60px 20px; background: var(--bg-900); border: 1px dashed var(--line-strong); border-radius: var(--r-lg);"><p style="color: var(--ink-muted); margin: 0;">Nothing to review in this tab.</p></div>';
+      return;
+    }
+
+    queue.innerHTML = filtered.map(c => {
+      const name = c.author_name || 'User';
+      return '<div class="mod-card ' + (c.is_flagged ? 'flagged' : '') + '">' +
+        '<div class="mod-head">' +
+          '<div>' +
+            '<div class="mod-author">' + escapeHtml(name) + '</div>' +
+            '<div class="mod-time">' + timeAgo(c.created_at) + ' &bull; Product #' + c.product_id + '</div>' +
+          '</div>' +
+          (c.is_flagged ? '<span style="font-family: var(--mono); font-size: 10px; text-transform: uppercase; padding: 3px 10px; border-radius: var(--r-full); background: rgba(239,68,68,0.15); color: var(--red);">Flagged</span>' : '<span style="font-family: var(--mono); font-size: 10px; text-transform: uppercase; padding: 3px 10px; border-radius: var(--r-full); background: rgba(16,217,130,0.15); color: var(--green);">Cleared</span>') +
+        '</div>' +
+        '<div class="mod-body">' + highlightHidden(c.content) + '</div>' +
+        '<div class="mod-actions">' +
+          '<a href="/products/' + c.product_id + '" target="_blank" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px;">View Listing</a>' +
+          (c.is_flagged
+            ? '<button class="btn btn-ghost clear-btn" data-id="' + c.id + '" style="font-size: 12px; padding: 6px 14px; color: var(--green); border-color: var(--green);">Clear Flag</button>'
+            : '<button class="btn btn-ghost reflag-btn" data-id="' + c.id + '" style="font-size: 12px; padding: 6px 14px; color: var(--amber); border-color: var(--amber);">Re-flag</button>') +
+          '<button class="btn btn-ghost delete-btn" data-id="' + c.id + '" style="font-size: 12px; padding: 6px 14px; color: var(--red); border-color: var(--red);">Delete</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    // Wire actions
+    queue.querySelectorAll('.clear-btn').forEach(b => b.addEventListener('click', () => setFlag((b as HTMLElement).dataset.id!, false)));
+    queue.querySelectorAll('.reflag-btn').forEach(b => b.addEventListener('click', () => setFlag((b as HTMLElement).dataset.id!, true)));
+    queue.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', () => deleteComment((b as HTMLElement).dataset.id!)));
+  }
+
+  async function setFlag(id: string, flagged: boolean) {
+    const { error } = await supabase.from('comments').update({ is_flagged: flagged }).eq('id', id);
+    if (error) { alert('Error: ' + error.message); return; }
+    const c = allComments.find(x => String(x.id) === String(id));
+    if (c) c.is_flagged = flagged;
+    renderStats();
+    render();
+  }
+
+  async function deleteComment(id: string) {
+    if (!confirm('Delete this comment permanently?')) return;
+    const { error } = await supabase.from('comments').delete().eq('id', id);
+    if (error) { alert('Error: ' + error.message); return; }
+    allComments = allComments.filter(x => String(x.id) !== String(id));
+    renderStats();
+    render();
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        (t as HTMLElement).style.background = 'transparent';
+        (t as HTMLElement).style.color = 'var(--ink-muted)';
+      });
+      const t = tab as HTMLElement;
+      const tabName = t.dataset.tab!;
+      t.style.background = tabName === 'flagged' ? 'var(--red)' : tabName === 'cleared' ? 'var(--green)' : 'var(--cyan)';
+      t.style.color = tabName === 'cleared' ? 'var(--bg-950)' : 'white';
+      currentTab = tabName;
+      render();
+    });
+  });
+
+  async function init() {
+    const isAdmin = await checkAdmin();
+    if (!isAdmin) return;
+
+    guard.style.display = 'none';
+    contentEl.style.display = 'block';
+
+    const { data, error } = await supabase
+      .from('comments')
+      .select('id, product_id, content, is_flagged, created_at, author_name, author_avatar_url')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (error) {
+      queue.innerHTML = '<p style="color: var(--red); font-family: var(--mono); font-size: 13px;">Error: ' + error.message + '</p>';
+      return;
+    }
+
+    allComments = data || [];
+    renderStats();
+    render();
+  }
+
+  init();
+</script>
