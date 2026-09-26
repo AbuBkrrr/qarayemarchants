@@ -4,76 +4,144 @@ import Layout from '../../layouts/Layout.astro';
 
 <Layout title="Merchant Profile - Qaraye Marchants">
   <div class="container" style="padding: 40px 24px; max-width: 700px;">
-    <h1 style="font-family: var(--display); font-size: 2rem; margin-bottom: 8px; color: var(--ink);">Merchant Profile</h1>
-    <p style="color: var(--ink-muted); margin-bottom: 32px;">This information appears on every listing you publish. Buyers use it to contact you.</p>
 
-    <!-- Avatar Section -->
-    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;">
-      <div id="avatar-preview" style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--violet)); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid var(--line); overflow: hidden; position: relative; transition: 0.2s;">
-        <span id="avatar-initial" style="font-family: var(--display); font-weight: 800; font-size: 42px; color: var(--bg-950);">U</span>
+    <!-- VIEW MODE -->
+    <div id="view-mode" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 12px;">
+        <h1 style="font-family: var(--display); font-size: 2rem; margin: 0; color: var(--ink);">My Profile</h1>
+        <button id="edit-btn" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Profile
+        </button>
       </div>
-      <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
-      <div style="margin-top: 16px; display: flex; gap: 8px;">
-        <button type="button" id="avatar-upload-btn" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px;">Upload Photo</button>
-        <button type="button" id="avatar-remove-btn" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px; display: none;">Remove</button>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 32px;">
+        <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; flex-wrap: wrap;">
+          <div id="view-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--violet)); display: flex; align-items: center; justify-content: center; border: 3px solid var(--line); overflow: hidden; flex-shrink: 0;">
+            <span id="view-initial" style="font-family: var(--display); font-weight: 800; font-size: 36px; color: var(--bg-950);">U</span>
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <h2 id="view-business" style="font-family: var(--display); font-size: 1.6rem; margin: 0 0 4px 0; color: var(--ink);">Your Business Name</h2>
+            <p id="view-owner" style="color: var(--ink-muted); margin: 0; font-size: 0.95rem;">Owner Name</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <div>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;">PHONE</div>
+            <div id="view-phone" style="color: var(--ink); font-size: 0.95rem;">-</div>
+          </div>
+          <div>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;">WHATSAPP</div>
+            <div id="view-whatsapp" style="color: var(--ink); font-size: 0.95rem;">-</div>
+          </div>
+          <div>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;">STATE</div>
+            <div id="view-state" style="color: var(--ink); font-size: 0.95rem;">-</div>
+          </div>
+          <div>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;">STATUS</div>
+            <div style="color: var(--green); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green);"></span>
+              Active Merchant
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-bottom: 6px;">BIO</div>
+          <p id="view-bio" style="color: var(--ink-muted); margin: 0; line-height: 1.7;">No bio added yet.</p>
+        </div>
       </div>
-      <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 8px;">JPG, PNG or WEBP - Max 2MB</p>
-      <p id="avatar-status" style="font-family: var(--mono); font-size: 11px; margin-top: 6px;"></p>
     </div>
 
-    <form id="profile-form" style="display: flex; flex-direction: column; gap: 20px;">
-      <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BUSINESS NAME *</label>
-        <input type="text" id="business_name" name="business_name" required placeholder="e.g., Kano Agro Traders"
-               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+    <!-- EDIT MODE -->
+    <div id="edit-mode" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 12px;">
+        <h1 style="font-family: var(--display); font-size: 2rem; margin: 0; color: var(--ink);">Edit Profile</h1>
+        <button id="cancel-btn" class="btn btn-ghost">Cancel</button>
+      </div>
+      <p style="color: var(--ink-muted); margin-bottom: 32px;">This information appears on every listing you publish. Buyers use it to contact you.</p>
+
+      <!-- Avatar Section -->
+      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;">
+        <div id="avatar-preview" style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--violet)); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid var(--line); overflow: hidden; position: relative; transition: 0.2s;">
+          <span id="avatar-initial" style="font-family: var(--display); font-weight: 800; font-size: 42px; color: var(--bg-950);">U</span>
+        </div>
+        <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
+        <div style="margin-top: 16px; display: flex; gap: 8px;">
+          <button type="button" id="avatar-upload-btn" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px;">Upload Photo</button>
+          <button type="button" id="avatar-remove-btn" class="btn btn-ghost" style="font-size: 12px; padding: 6px 14px; display: none;">Remove</button>
+        </div>
+        <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 8px;">JPG, PNG or WEBP - Max 2MB</p>
+        <p id="avatar-status" style="font-family: var(--mono); font-size: 11px; margin-top: 6px;"></p>
       </div>
 
-      <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">OWNER NAME</label>
-        <input type="text" id="owner_name" name="owner_name" placeholder="e.g., Abu Bakr"
-               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <form id="profile-form" style="display: flex; flex-direction: column; gap: 20px;">
         <div>
-          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PHONE</label>
-          <input type="tel" id="phone" name="phone" placeholder="0803 123 4567"
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BUSINESS NAME *</label>
+          <input type="text" id="business_name" name="business_name" required placeholder="e.g., Kano Agro Traders"
                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
         </div>
+
         <div>
-          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">WHATSAPP *</label>
-          <input type="tel" id="whatsapp" name="whatsapp" required placeholder="2348031234567"
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">OWNER NAME</label>
+          <input type="text" id="owner_name" name="owner_name" placeholder="e.g., Abu Bakr"
                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
-          <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 4px;">Country code + number, no + or spaces</p>
         </div>
-      </div>
 
-      <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
-        <input type="text" id="state" name="state" placeholder="e.g., Kano"
-               style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
-      </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PHONE</label>
+            <input type="tel" id="phone" name="phone" placeholder="0803 123 4567"
+                   style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+          </div>
+          <div>
+            <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">WHATSAPP *</label>
+            <input type="tel" id="whatsapp" name="whatsapp" required placeholder="2348031234567"
+                   style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+            <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 4px;">Country code + number, no + or spaces</p>
+          </div>
+        </div>
 
-      <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BIO</label>
-        <textarea id="bio" name="bio" rows="3" placeholder="Tell buyers about your farm, business, or specialty..."
-                  style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); resize: vertical;"></textarea>
-      </div>
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">STATE</label>
+          <input type="text" id="state" name="state" placeholder="e.g., Kano"
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
 
-      <button type="submit" class="btn btn-primary" style="padding: 14px 24px; font-size: 15px;">Save Profile</button>
-    </form>
+        <div>
+          <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">BIO</label>
+          <textarea id="bio" name="bio" rows="3" placeholder="Tell buyers about your farm, business, or specialty..."
+                    style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); resize: vertical;"></textarea>
+        </div>
 
-    <p id="status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px;"></p>
+        <button type="submit" class="btn btn-primary" style="padding: 14px 24px; font-size: 15px;">Save Profile</button>
+      </form>
+
+      <p id="status" style="margin-top: 16px; font-family: var(--mono); font-size: 13px;"></p>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" style="text-align: center; padding: 60px 0; color: var(--ink-muted); font-family: var(--mono); font-size: 13px;">
+      Loading profile...
+    </div>
+
   </div>
 </Layout>
 
 <script>
   import { supabase } from '../../lib/supabase';
 
+  const viewMode = document.getElementById('view-mode')!;
+  const editMode = document.getElementById('edit-mode')!;
+  const loadingEl = document.getElementById('loading')!;
+  const editBtn = document.getElementById('edit-btn')!;
+  const cancelBtn = document.getElementById('cancel-btn')!;
+
   const form = document.getElementById('profile-form') as HTMLFormElement;
   const statusEl = document.getElementById('status')!;
   const avatarPreview = document.getElementById('avatar-preview') as HTMLDivElement;
-  const avatarInitial = document.getElementById('avatar-initial') as HTMLSpanElement;
   const avatarInput = document.getElementById('avatar-input') as HTMLInputElement;
   const avatarUploadBtn = document.getElementById('avatar-upload-btn') as HTMLButtonElement;
   const avatarRemoveBtn = document.getElementById('avatar-remove-btn') as HTMLButtonElement;
@@ -81,41 +149,103 @@ import Layout from '../../layouts/Layout.astro';
 
   let currentAvatarUrl: string | null = null;
   let pendingAvatarFile: File | null = null;
+  let cachedProfile: any = null;
+  let currentUserId: string | null = null;
 
-  function showAvatar(url: string | null, fallbackInitial: string) {
+  function showAvatarInEdit(url: string | null, fallbackInitial: string) {
     if (url) {
       avatarPreview.innerHTML = '<img src="' + url + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
       avatarPreview.style.background = 'transparent';
       avatarRemoveBtn.style.display = 'inline-flex';
     } else {
-      avatarPreview.innerHTML = '<span id="avatar-initial" style="font-family: var(--display); font-weight: 800; font-size: 42px; color: var(--bg-950);">' + fallbackInitial + '</span>';
+      avatarPreview.innerHTML = '<span style="font-family: var(--display); font-weight: 800; font-size: 42px; color: var(--bg-950);">' + fallbackInitial + '</span>';
       avatarPreview.style.background = 'linear-gradient(135deg, var(--cyan), var(--violet))';
       avatarRemoveBtn.style.display = 'none';
     }
   }
 
+  function renderView(profile: any, userEmail: string | null) {
+    const name = profile?.business_name || 'Your Business Name';
+    const initial = (profile?.business_name || profile?.owner_name || userEmail || 'U').charAt(0).toUpperCase();
+
+    // Avatar
+    const viewAvatar = document.getElementById('view-avatar')!;
+    if (profile?.avatar_url) {
+      viewAvatar.innerHTML = '<img src="' + profile.avatar_url + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+      viewAvatar.style.background = 'transparent';
+    } else {
+      viewAvatar.innerHTML = '<span style="font-family: var(--display); font-weight: 800; font-size: 36px; color: var(--bg-950);">' + initial + '</span>';
+      viewAvatar.style.background = 'linear-gradient(135deg, var(--cyan), var(--violet))';
+    }
+
+    document.getElementById('view-business')!.textContent = name;
+    document.getElementById('view-owner')!.textContent = profile?.owner_name || 'Add owner name';
+    document.getElementById('view-phone')!.textContent = profile?.phone || '-';
+    document.getElementById('view-whatsapp')!.textContent = profile?.whatsapp || '-';
+    document.getElementById('view-state')!.textContent = profile?.state || '-';
+    document.getElementById('view-bio')!.textContent = profile?.bio || 'No bio added yet.';
+  }
+
+  function populateForm(profile: any) {
+    (document.getElementById('business_name') as HTMLInputElement).value = profile?.business_name || '';
+    (document.getElementById('owner_name') as HTMLInputElement).value = profile?.owner_name || '';
+    (document.getElementById('phone') as HTMLInputElement).value = profile?.phone || '';
+    (document.getElementById('whatsapp') as HTMLInputElement).value = profile?.whatsapp || '';
+    (document.getElementById('state') as HTMLInputElement).value = profile?.state || '';
+    (document.getElementById('bio') as HTMLTextAreaElement).value = profile?.bio || '';
+    currentAvatarUrl = profile?.avatar_url || null;
+    const initial = (profile?.business_name || profile?.owner_name || 'U').charAt(0).toUpperCase();
+    showAvatarInEdit(currentAvatarUrl, initial);
+  }
+
+  function showView() {
+    viewMode.style.display = 'block';
+    editMode.style.display = 'none';
+    loadingEl.style.display = 'none';
+  }
+
+  function showEdit() {
+    viewMode.style.display = 'none';
+    editMode.style.display = 'block';
+    loadingEl.style.display = 'none';
+  }
+
+  editBtn.addEventListener('click', () => {
+    populateForm(cachedProfile);
+    showEdit();
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    pendingAvatarFile = null;
+    avatarStatus.textContent = '';
+    statusEl.textContent = '';
+    renderView(cachedProfile, null);
+    showView();
+  });
+
   async function loadProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      statusEl.textContent = 'You must be logged in.';
-      statusEl.style.color = 'var(--red)';
+      loadingEl.textContent = 'You must be logged in.';
       return;
     }
+    currentUserId = user.id;
+
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-    if (data) {
-      (document.getElementById('business_name') as HTMLInputElement).value = data.business_name || '';
-      (document.getElementById('owner_name') as HTMLInputElement).value = data.owner_name || '';
-      (document.getElementById('phone') as HTMLInputElement).value = data.phone || '';
-      (document.getElementById('whatsapp') as HTMLInputElement).value = data.whatsapp || '';
-      (document.getElementById('state') as HTMLInputElement).value = data.state || '';
-      (document.getElementById('bio') as HTMLTextAreaElement).value = data.bio || '';
-      currentAvatarUrl = data.avatar_url || null;
-      const initial = (data.business_name || data.owner_name || user.email || 'U').charAt(0).toUpperCase();
-      showAvatar(currentAvatarUrl, initial);
+    cachedProfile = data || {};
+
+    renderView(cachedProfile, user.email ?? null);
+    populateForm(cachedProfile);
+
+    // If no business name set, go straight to edit
+    if (!cachedProfile.business_name) {
+      showEdit();
+    } else {
+      showView();
     }
   }
 
-  // Avatar upload interactions
+  // Avatar interactions
   avatarPreview.addEventListener('click', () => avatarInput.click());
   avatarUploadBtn.addEventListener('click', () => avatarInput.click());
 
@@ -136,26 +266,24 @@ import Layout from '../../layouts/Layout.astro';
 
     pendingAvatarFile = file;
     avatarStatus.textContent = '';
-    const previewUrl = URL.createObjectURL(file);
-    showAvatar(previewUrl, 'U');
+    showAvatarInEdit(URL.createObjectURL(file), 'U');
   });
 
   avatarRemoveBtn.addEventListener('click', async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!currentUserId) return;
 
     if (currentAvatarUrl) {
       const path = currentAvatarUrl.split('/avatars/')[1]?.split('?')[0];
       if (path) await supabase.storage.from('avatars').remove([path]);
     }
 
-    await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
+    await supabase.from('profiles').update({ avatar_url: null }).eq('id', currentUserId);
     currentAvatarUrl = null;
     pendingAvatarFile = null;
-    showAvatar(null, 'U');
+    cachedProfile.avatar_url = null;
+    showAvatarInEdit(null, 'U');
     avatarStatus.textContent = 'Avatar removed.';
     avatarStatus.style.color = 'var(--green)';
-    setTimeout(() => window.location.reload(), 800);
   });
 
   form.addEventListener('submit', async (e) => {
@@ -163,20 +291,18 @@ import Layout from '../../layouts/Layout.astro';
     statusEl.textContent = 'Saving...';
     statusEl.style.color = 'var(--ink-muted)';
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!currentUserId) {
       statusEl.textContent = 'Error: Not logged in.';
       statusEl.style.color = 'var(--red)';
       return;
     }
 
-    // Upload pending avatar if any
     let newAvatarUrl = currentAvatarUrl;
     if (pendingAvatarFile) {
       avatarStatus.textContent = 'Uploading avatar...';
       avatarStatus.style.color = 'var(--ink-muted)';
       const ext = pendingAvatarFile.name.split('.').pop();
-      const fileName = user.id + '/avatar-' + Date.now() + '.' + ext;
+      const fileName = currentUserId + '/avatar-' + Date.now() + '.' + ext;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -191,20 +317,16 @@ import Layout from '../../layouts/Layout.astro';
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
       newAvatarUrl = urlData.publicUrl;
 
-      // Best-effort cleanup of old avatar
       if (currentAvatarUrl) {
         const oldPath = currentAvatarUrl.split('/avatars/')[1]?.split('?')[0];
         if (oldPath) await supabase.storage.from('avatars').remove([oldPath]);
       }
-
       pendingAvatarFile = null;
-      avatarStatus.textContent = 'Avatar uploaded.';
-      avatarStatus.style.color = 'var(--green)';
     }
 
     const formData = new FormData(form);
     const payload: Record<string, unknown> = {
-      id: user.id,
+      id: currentUserId,
       business_name: formData.get('business_name'),
       owner_name: formData.get('owner_name'),
       phone: formData.get('phone'),
@@ -219,11 +341,17 @@ import Layout from '../../layouts/Layout.astro';
     if (error) {
       statusEl.textContent = 'Error: ' + error.message;
       statusEl.style.color = 'var(--red)';
-    } else {
-      statusEl.textContent = 'Profile saved successfully.';
-      statusEl.style.color = 'var(--green)';
-      setTimeout(() => window.location.reload(), 800);
+      return;
     }
+
+    // Reload and switch to view mode
+    const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', currentUserId).single();
+    cachedProfile = refreshed || payload;
+    renderView(cachedProfile, null);
+    populateForm(cachedProfile);
+    statusEl.textContent = '';
+    avatarStatus.textContent = '';
+    showView();
   });
 
   loadProfile();
