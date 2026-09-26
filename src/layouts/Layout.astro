@@ -1,11 +1,11 @@
----
+﻿---
 interface Props {
   title?: string;
   description?: string;
 }
 
 const {
-  title = 'Qaraye Marchants — The pulse of Nigerian finance',
+  title = 'Qaraye Marchants â€” The pulse of Nigerian finance',
   description = 'Read today\u2019s Nigerian financial news, share your insights, and discuss what matters with the community.',
 } = Astro.props;
 
@@ -34,7 +34,7 @@ const year = new Date().getFullYear();
       --bg-800: #141b30;
       --bg-700: #1c2540;
 
-      /* Accents — futuristic */
+      /* Accents â€” futuristic */
       --cyan: #00e5ff;
       --cyan-soft: rgba(0, 229, 255, 0.12);
       --cyan-dim: #0891a8;
@@ -365,10 +365,17 @@ const year = new Date().getFullYear();
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><line x1="18" y1="14" x2="12" y2="14"/><line x1="18" y1="18" x2="12" y2="18"/><line x1="18" y1="10" x2="12" y2="10"/></svg>
           <span class="gn-text" data-i18n="tabNews">News</span>
         </a>
+
         <a href="/trending" class="gn-link">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           <span class="gn-text" data-i18n="trending">Trending</span>
         </a>
+
+        <a href="/products" class="gn-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="gn-text" data-i18n="tabProducts">Products</span>
+        </a>
+
         <a href="/community" class="gn-link">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span class="gn-text" data-i18n="tabCommunity">Community</span>
@@ -392,7 +399,7 @@ const year = new Date().getFullYear();
               <span class="lang-option-code">HA</span>
             </div>
             <div class="lang-option" data-lang-option="yo">
-              <span>Yorùbá</span>
+              <span>YorÃ¹bÃ¡</span>
               <span class="lang-option-code">YO</span>
             </div>
             <div class="lang-option" data-lang-option="ig">

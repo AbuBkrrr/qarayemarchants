@@ -1,0 +1,49 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+import { products } from '../../data/products.js';
+
+const categories = [...new Set(products.map(p => p.category))];
+---
+
+<Layout title="Browse Products — Qaraye Marchants" description="Browse agricultural products from verified merchants across Nigeria.">
+  <div class="container" style="padding: 40px 24px;">
+    <h1 style="font-family: var(--display); font-size: 2.2rem; margin-bottom: 8px; color: var(--ink);">Browse Products</h1>
+    <p style="color: var(--ink-muted); margin-bottom: 32px;">Find agricultural products from verified merchants across Nigeria.</p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px;">
+      <a href="/products" style="font-family: var(--mono); font-size: 12px; padding: 8px 16px; border-radius: var(--r-full); background: var(--cyan-soft); color: var(--cyan); border: 1px solid var(--line); text-decoration: none;">All</a>
+      {categories.map(cat => (
+        <a href={`/products?category=${cat}`} style="font-family: var(--mono); font-size: 12px; padding: 8px 16px; border-radius: var(--r-full); background: var(--bg-850); color: var(--ink-muted); border: 1px solid var(--line-soft); text-decoration: none;">{cat}</a>
+      ))}
+    </div>
+
+    <div style="display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+      {products.map((product) => (
+        <a href={`/products/${product.id}`} style="text-decoration: none; display: block; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden; transition: 0.2s;" class="product-card">
+          <div style="height: 180px; background: var(--bg-800); display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-family: var(--mono); font-size: 12px;">
+            {product.image ? <img src={product.image} alt={product.name} style="width: 100%; height: 100%; object-fit: cover;" /> : 'Product Image'}
+          </div>
+          <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <h2 style="font-family: var(--display); font-size: 1.1rem; margin: 0; color: var(--ink);">{product.name}</h2>
+              {product.verified && <span style="font-size: 10px; padding: 2px 8px; border-radius: var(--r-full); background: var(--cyan-soft); color: var(--cyan); font-family: var(--mono);">✅ Verified</span>}
+            </div>
+            <p style="font-size: 0.9rem; color: var(--ink-muted); margin: 0 0 12px 0;">{product.location}</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-family: var(--display); font-weight: 700; font-size: 1.2rem; color: var(--cyan);">₦{product.price.toLocaleString()}</span>
+              <span style="font-family: var(--mono); font-size: 11px; color: var(--ink-faint);">{product.unit}</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .product-card:hover {
+    border-color: var(--cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+</style>
