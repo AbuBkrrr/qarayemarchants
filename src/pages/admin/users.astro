@@ -1,0 +1,266 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Admin Users - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 1000px;">
+
+    <div id="guard" style="text-align: center; padding: 80px 20px; color: var(--ink-muted); font-family: var(--mono); font-size: 12px;">
+      Checking permissions...
+    </div>
+
+    <div id="content" style="display: none;">
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 6px 0; color: var(--ink);">Admin Users</h1>
+          <p style="color: var(--ink-muted); margin: 0;">Grant or revoke admin access. Admins can moderate comments and manage users.</p>
+        </div>
+        <a href="/admin/moderation" class="btn btn-ghost">Moderation Queue</a>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom: 24px;">
+        <input type="text" id="search" placeholder="Search by name, email, or phone..." style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); color: var(--ink); font-family: var(--body); font-size: 14px;">
+      </div>
+
+      <!-- Tabs -->
+      <div style="display: flex; gap: 4px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full); margin-bottom: 24px; width: fit-content;">
+        <button class="tab active" data-tab="admins" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--r-full); border: none; cursor: pointer; background: var(--amber); color: var(--bg-950);">Admins</button>
+        <button class="tab" data-tab="all" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);">All Users</button>
+      </div>
+
+      <div id="list"></div>
+      <p id="empty" style="display: none; text-align: center; padding: 60px 20px; color: var(--ink-muted); font-family: var(--mono); font-size: 13px;"></p>
+
+    </div>
+
+  </div>
+</Layout>
+
+<style is:global>
+  .admin-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-md);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .admin-card.is-admin {
+    border-left: 4px solid var(--amber);
+  }
+  .admin-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-950);
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .admin-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .admin-info {
+    flex: 1;
+    min-width: 200px;
+  }
+  .admin-name {
+    font-family: var(--display);
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+  .admin-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+  .admin-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: var(--r-full);
+    background: rgba(245,158,11,0.15);
+    color: var(--amber);
+    letter-spacing: 0.05em;
+  }
+</style>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const guard = document.getElementById('guard')!;
+  const contentEl = document.getElementById('content')!;
+  const listEl = document.getElementById('list')!;
+  const emptyEl = document.getElementById('empty')!;
+  const searchEl = document.getElementById('search') as HTMLInputElement;
+  const tabs = document.querySelectorAll('.tab');
+
+  let currentUserId: string | null = null;
+  let allUsers: any[] = [];
+  let currentTab = 'admins';
+  let searchQuery = '';
+
+  function escapeHtml(s: string) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  async function checkAdmin() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      guard.innerHTML = '<p style="color: var(--red);">Not signed in. <a href="/login" style="color: var(--cyan);">Sign in</a></p>';
+      return false;
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+    if (!profile?.is_admin) {
+      guard.innerHTML = '<p style="color: var(--red);">Access denied.</p>';
+      return false;
+    }
+    currentUserId = user.id;
+    return true;
+  }
+
+  function render() {
+    let filtered = allUsers;
+    if (currentTab === 'admins') filtered = allUsers.filter(u => u.is_admin);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(u =>
+        (u.business_name || '').toLowerCase().includes(q) ||
+        (u.owner_name || '').toLowerCase().includes(q) ||
+        (u.display_name || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.phone || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      emptyEl.textContent = currentTab === 'admins' ? 'No admins yet. Promote a user from the "All Users" tab.' : 'No users match your search.';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    listEl.innerHTML = filtered.map(u => {
+      const name = u.business_name || u.owner_name || u.display_name || 'User';
+      const initial = name.charAt(0).toUpperCase();
+      const avatarHtml = u.avatar_url
+        ? '<img src="' + u.avatar_url + '" alt="">'
+        : initial;
+      const isSelf = String(u.id) === String(currentUserId);
+
+      return '<div class="admin-card ' + (u.is_admin ? 'is-admin' : '') + '">' +
+        '<div class="admin-avatar">' + avatarHtml + '</div>' +
+        '<div class="admin-info">' +
+          '<div class="admin-name">' + escapeHtml(name) + (isSelf ? ' <span style="color: var(--ink-muted); font-size: 0.8em;">(you)</span>' : '') + '</div>' +
+          '<div class="admin-meta">' +
+            (u.email ? escapeHtml(u.email) + ' &bull; ' : '') +
+            (u.phone ? escapeHtml(u.phone) + ' &bull; ' : '') +
+            'Joined ' + new Date(u.created_at).toLocaleDateString() +
+          '</div>' +
+        '</div>' +
+        (u.is_admin ? '<span class="admin-badge">Admin</span>' : '') +
+        (isSelf
+          ? '<button class="btn btn-ghost" disabled style="opacity: 0.5; font-size: 12px; padding: 8px 16px;">Cannot modify self</button>'
+          : u.is_admin
+            ? '<button class="btn btn-ghost revoke-btn" data-id="' + u.id + '" style="font-size: 12px; padding: 8px 16px; color: var(--red); border-color: var(--red);">Revoke Admin</button>'
+            : '<button class="btn btn-primary promote-btn" data-id="' + u.id + '" style="font-size: 12px; padding: 8px 16px;">Make Admin</button>'
+        ) +
+      '</div>';
+    }).join('');
+
+    listEl.querySelectorAll('.promote-btn').forEach(b => {
+      b.addEventListener('click', () => toggleAdmin((b as HTMLElement).dataset.id!, true));
+    });
+    listEl.querySelectorAll('.revoke-btn').forEach(b => {
+      b.addEventListener('click', () => toggleAdmin((b as HTMLElement).dataset.id!, false));
+    });
+  }
+
+  async function toggleAdmin(userId: string, promote: boolean) {
+    const user = allUsers.find(u => String(u.id) === String(userId));
+    const label = user?.business_name || user?.display_name || 'this user';
+    const action = promote ? 'promote' : 'demote';
+    if (!confirm('Are you sure you want to ' + action + ' ' + label + '?')) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_admin: promote })
+      .eq('id', userId);
+
+    if (error) {
+      alert('Error: ' + error.message);
+      return;
+    }
+
+    const u = allUsers.find(x => String(x.id) === String(userId));
+    if (u) u.is_admin = promote;
+    render();
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        (t as HTMLElement).style.background = 'transparent';
+        (t as HTMLElement).style.color = 'var(--ink-muted)';
+      });
+      const t = tab as HTMLElement;
+      const tabName = t.dataset.tab!;
+      t.style.background = tabName === 'admins' ? 'var(--amber)' : 'var(--cyan)';
+      t.style.color = tabName === 'admins' ? 'var(--bg-950)' : 'var(--bg-950)';
+      currentTab = tabName;
+      render();
+    });
+  });
+
+  searchEl.addEventListener('input', () => {
+    searchQuery = searchEl.value.trim();
+    render();
+  });
+
+  async function init() {
+    const isAdmin = await checkAdmin();
+    if (!isAdmin) return;
+
+    guard.style.display = 'none';
+    contentEl.style.display = 'block';
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, business_name, owner_name, email, phone, avatar_url, is_admin, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) {
+      listEl.innerHTML = '<p style="color: var(--red); font-family: var(--mono); font-size: 13px; padding: 20px;">Error: ' + error.message + '</p>';
+      return;
+    }
+
+    allUsers = data || [];
+    render();
+  }
+
+  init();
+</script>

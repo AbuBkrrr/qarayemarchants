@@ -5,34 +5,42 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="Sign In - Qaraye Marchants">
   <div class="container" style="padding: 60px 24px; max-width: 460px;">
     <div style="display: flex; gap: 4px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full); margin-bottom: 32px;">
-      <button id="tab-signin" style="flex: 1; padding: 10px; border-radius: var(--r-full); background: var(--cyan); color: var(--bg-950); border: none; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 13px;">Sign In</button>
-      <button id="tab-signup" style="flex: 1; padding: 10px; border-radius: var(--r-full); background: transparent; color: var(--ink-muted); border: none; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 13px;">Sign Up</button>
+      <button id="tab-signin" type="button" style="flex: 1; padding: 10px; border-radius: var(--r-full); background: var(--cyan); color: var(--bg-950); border: none; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 13px;">Sign In</button>
+      <button id="tab-signup" type="button" style="flex: 1; padding: 10px; border-radius: var(--r-full); background: transparent; color: var(--ink-muted); border: none; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 13px;">Sign Up</button>
     </div>
 
     <form id="signin-form" style="display: flex; flex-direction: column; gap: 16px;">
       <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">EMAIL</label>
-        <input type="email" id="signin-email" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        <label id="signin-id-label" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">EMAIL</label>
+        <input type="text" id="signin-id" required autocomplete="username" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
       </div>
       <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PASSWORD</label>
-        <input type="password" id="signin-password" required style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        <label for="signin-password" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PASSWORD</label>
+        <input type="password" id="signin-password" required autocomplete="current-password" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
       </div>
-      <button type="submit" class="btn btn-primary" style="padding: 14px;">Sign In</button>
+
+      <div class="submit-row">
+        <button type="submit" id="signin-submit" class="btn-signin">Sign In</button>
+        <button type="button" id="admin-toggle" class="admin-toggle" title="Admin Login" aria-label="Toggle admin login">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </button>
+      </div>
+
+      <p id="admin-hint" style="display: none; font-family: var(--mono); font-size: 10.5px; color: var(--amber); margin: 0; text-align: center;">Admin mode active — enter your admin username</p>
     </form>
 
     <form id="signup-form" style="display: none; flex-direction: column; gap: 16px;">
       <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PHONE NUMBER *</label>
+        <label for="signup-phone" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PHONE NUMBER *</label>
         <input type="tel" id="signup-phone" required placeholder="0803 123 4567" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
         <p style="font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 4px;">Required. Used for account recovery and merchant verification.</p>
       </div>
       <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">EMAIL (Optional)</label>
+        <label for="signup-email" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">EMAIL (Optional)</label>
         <input type="email" id="signup-email" placeholder="you@example.com" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
       </div>
       <div>
-        <label style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PASSWORD *</label>
+        <label for="signup-password" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">PASSWORD *</label>
         <input type="password" id="signup-password" required minlength="6" style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
       </div>
       <button type="submit" class="btn btn-primary" style="padding: 14px;">Create Account</button>
@@ -42,14 +50,78 @@ import Layout from '../layouts/Layout.astro';
   </div>
 </Layout>
 
+<style is:global>
+  .submit-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .btn-signin {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--r-full);
+    border: none;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: var(--bg-950);
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .btn-signin:hover { opacity: 0.92; }
+  .btn-signin.admin-active {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    box-shadow: 0 0 20px rgba(245,158,11,0.3);
+  }
+  .admin-toggle {
+    width: 46px;
+    min-width: 46px;
+    border-radius: var(--r-full);
+    background: var(--bg-850);
+    border: 1px solid var(--line-soft);
+    color: var(--ink-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    padding: 0;
+  }
+  .admin-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+  .admin-toggle:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: var(--cyan-soft);
+  }
+  .admin-toggle.active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+    box-shadow: 0 0 20px rgba(245,158,11,0.4);
+  }
+</style>
+
 <script>
   import { supabase } from '../lib/supabase';
+  import { ADMIN_USERNAME, ADMIN_EMAIL } from '../config';
 
   const tabSignin = document.getElementById('tab-signin') as HTMLButtonElement;
   const tabSignup = document.getElementById('tab-signup') as HTMLButtonElement;
   const signinForm = document.getElementById('signin-form') as HTMLFormElement;
   const signupForm = document.getElementById('signup-form') as HTMLFormElement;
   const statusEl = document.getElementById('auth-status')!;
+  const adminToggle = document.getElementById('admin-toggle') as HTMLButtonElement;
+  const adminHint = document.getElementById('admin-hint')!;
+  const signinSubmit = document.getElementById('signin-submit') as HTMLButtonElement;
+  const signinIdLabel = document.getElementById('signin-id-label')!;
+  const signinId = document.getElementById('signin-id') as HTMLInputElement;
+
+  let isAdminMode = false;
 
   tabSignin.addEventListener('click', () => {
     tabSignin.style.background = 'var(--cyan)';
@@ -69,23 +141,94 @@ import Layout from '../layouts/Layout.astro';
     signupForm.style.display = 'flex';
     signinForm.style.display = 'none';
     statusEl.textContent = '';
+    // Auto-exit admin mode when switching to signup
+    if (isAdminMode) toggleAdminMode();
   });
+
+  function toggleAdminMode() {
+    isAdminMode = !isAdminMode;
+    if (isAdminMode) {
+      signinIdLabel.textContent = 'ADMIN USERNAME';
+      signinId.type = 'text';
+      signinId.placeholder = 'admin';
+      signinId.value = '';
+      signinSubmit.textContent = 'Admin Sign In';
+      signinSubmit.classList.add('admin-active');
+      adminToggle.classList.add('active');
+      adminToggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      adminHint.style.display = 'block';
+      statusEl.textContent = '';
+    } else {
+      signinIdLabel.textContent = 'EMAIL';
+      signinId.type = 'email';
+      signinId.placeholder = '';
+      signinId.value = '';
+      signinSubmit.textContent = 'Sign In';
+      signinSubmit.classList.remove('admin-active');
+      adminToggle.classList.remove('active');
+      adminToggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+      adminHint.style.display = 'none';
+      statusEl.textContent = '';
+    }
+  }
+
+  adminToggle.addEventListener('click', toggleAdminMode);
 
   signinForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    statusEl.textContent = 'Signing in...';
+    statusEl.textContent = isAdminMode ? 'Verifying admin...' : 'Signing in...';
     statusEl.style.color = 'var(--ink-muted)';
-    const email = (document.getElementById('signin-email') as HTMLInputElement).value;
+
+    const idValue = signinId.value.trim();
     const password = (document.getElementById('signin-password') as HTMLInputElement).value;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    let email = idValue;
+    let isAdminAttempt = false;
+
+    if (isAdminMode) {
+      // In admin mode, map username to admin email
+      if (idValue.toLowerCase() === ADMIN_USERNAME.toLowerCase()) {
+        email = ADMIN_EMAIL;
+        isAdminAttempt = true;
+      } else {
+        // If they entered an email, use it as-is and still verify admin status
+        email = idValue.includes('@') ? idValue : idValue + '@qarayemarchants.local';
+        isAdminAttempt = true;
+      }
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
     if (error) {
       statusEl.textContent = 'Error: ' + error.message;
       statusEl.style.color = 'var(--red)';
-    } else {
-      statusEl.textContent = 'Success! Redirecting...';
-      statusEl.style.color = 'var(--green)';
-      window.location.href = '/';
+      return;
     }
+
+    // If admin mode, verify is_admin flag
+    if (isAdminAttempt && data.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!profile?.is_admin) {
+        await supabase.auth.signOut();
+        statusEl.textContent = 'Access denied: this account is not an administrator.';
+        statusEl.style.color = 'var(--red)';
+        return;
+      }
+
+      statusEl.textContent = 'Admin verified. Redirecting...';
+      statusEl.style.color = 'var(--green)';
+      window.location.href = '/admin/moderation';
+      return;
+    }
+
+    statusEl.textContent = 'Success! Redirecting...';
+    statusEl.style.color = 'var(--green)';
+    window.location.href = '/';
   });
 
   signupForm.addEventListener('submit', async (e) => {

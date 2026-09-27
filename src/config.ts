@@ -12,3 +12,11 @@ export const ADMIN_EMAIL = 'support@qarayemarchants.com.ng';
 
 // Display name shown in contact prompts
 export const ADMIN_DISPLAY_NAME = 'Qaraye Marchants Admin';
+// =====================================================
+// ADMIN ACCESS
+// =====================================================
+// The admin login form on /login uses this username.
+// When entered, it maps to the admin's real account email.
+
+export const ADMIN_USERNAME = 'admin';
+export const ADMIN_EMAIL = 'abizaea@gmail.com'; // Your admin account email
