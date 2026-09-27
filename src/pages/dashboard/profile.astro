@@ -53,6 +53,37 @@ import Layout from '../../layouts/Layout.astro';
           <p id="view-bio" style="color: var(--ink-muted); margin: 0; line-height: 1.7;">No bio added yet.</p>
         </div>
       </div>
+
+      <!-- Password Change Card -->
+      <div style="margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line-soft);">
+        <h2 style="font-family: var(--display); font-size: 1.15rem; margin: 0 0 16px 0; color: var(--ink);">Security</h2>
+        <button id="change-pwd-btn" class="btn btn-ghost" style="padding: 10px 20px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Change Password
+        </button>
+
+        <div id="change-pwd-form" style="display: none; margin-top: 18px; padding: 20px; background: var(--bg-850); border-radius: var(--r-md); border: 1px solid var(--line-soft);">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <label style="display: block; font-family: var(--mono); font-size: 11.5px; margin-bottom: 6px; color: var(--ink-muted);">CURRENT PASSWORD</label>
+              <input type="password" id="current-pwd" style="width: 100%; padding: 11px; background: var(--bg-900); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+            </div>
+            <div>
+              <label style="display: block; font-family: var(--mono); font-size: 11.5px; margin-bottom: 6px; color: var(--ink-muted);">NEW PASSWORD</label>
+              <input type="password" id="new-pwd" minlength="6" style="width: 100%; padding: 11px; background: var(--bg-900); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+            </div>
+            <div>
+              <label style="display: block; font-family: var(--mono); font-size: 11.5px; margin-bottom: 6px; color: var(--ink-muted);">CONFIRM NEW PASSWORD</label>
+              <input type="password" id="confirm-pwd" minlength="6" style="width: 100%; padding: 11px; background: var(--bg-900); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button id="save-pwd-btn" class="btn btn-primary" style="padding: 10px 20px;">Update Password</button>
+              <button id="cancel-pwd-btn" class="btn btn-ghost" style="padding: 10px 20px;">Cancel</button>
+            </div>
+            <p id="pwd-status" style="font-family: var(--mono); font-size: 12px; margin: 0;"></p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- EDIT MODE -->
@@ -354,6 +385,79 @@ import Layout from '../../layouts/Layout.astro';
     statusEl.textContent = '';
     avatarStatus.textContent = '';
     showView();
+  });
+
+  // --- Password change logic ---
+  const changePwdBtn = document.getElementById('change-pwd-btn');
+  const changePwdForm = document.getElementById('change-pwd-form');
+  const cancelPwdBtn = document.getElementById('cancel-pwd-btn');
+  const savePwdBtn = document.getElementById('save-pwd-btn');
+  const pwdStatus = document.getElementById('pwd-status');
+
+  changePwdBtn?.addEventListener('click', () => {
+    if (changePwdForm) changePwdForm.style.display = 'block';
+    changePwdBtn.style.display = 'none';
+  });
+
+  cancelPwdBtn?.addEventListener('click', () => {
+    if (changePwdForm) changePwdForm.style.display = 'none';
+    changePwdBtn.style.display = 'inline-flex';
+    if (pwdStatus) pwdStatus.textContent = '';
+    (document.getElementById('current-pwd') as HTMLInputElement).value = '';
+    (document.getElementById('new-pwd') as HTMLInputElement).value = '';
+    (document.getElementById('confirm-pwd') as HTMLInputElement).value = '';
+  });
+
+  savePwdBtn?.addEventListener('click', async () => {
+    const current = (document.getElementById('current-pwd') as HTMLInputElement).value;
+    const next = (document.getElementById('new-pwd') as HTMLInputElement).value;
+    const confirm = (document.getElementById('confirm-pwd') as HTMLInputElement).value;
+
+    if (!current || !next || !confirm) {
+      if (pwdStatus) { pwdStatus.textContent = 'Please fill in all fields.'; pwdStatus.style.color = 'var(--red)'; }
+      return;
+    }
+    if (next !== confirm) {
+      if (pwdStatus) { pwdStatus.textContent = 'New passwords do not match.'; pwdStatus.style.color = 'var(--red)'; }
+      return;
+    }
+    if (next.length < 6) {
+      if (pwdStatus) { pwdStatus.textContent = 'Password must be at least 6 characters.'; pwdStatus.style.color = 'var(--red)'; }
+      return;
+    }
+
+    if (pwdStatus) { pwdStatus.textContent = 'Updating...'; pwdStatus.style.color = 'var(--ink-muted)'; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      if (pwdStatus) { pwdStatus.textContent = 'Cannot verify identity. Contact admin.'; pwdStatus.style.color = 'var(--red)'; }
+      return;
+    }
+
+    // Verify current password by re-signing in
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: current
+    });
+
+    if (verifyError) {
+      if (pwdStatus) { pwdStatus.textContent = 'Current password is incorrect.'; pwdStatus.style.color = 'var(--red)'; }
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: next });
+
+    if (error) {
+      if (pwdStatus) { pwdStatus.textContent = 'Error: ' + error.message; pwdStatus.style.color = 'var(--red)'; }
+      return;
+    }
+
+    if (pwdStatus) { pwdStatus.textContent = 'Password updated successfully.'; pwdStatus.style.color = 'var(--green)'; }
+    setTimeout(() => {
+      if (changePwdForm) changePwdForm.style.display = 'none';
+      if (changePwdBtn) changePwdBtn.style.display = 'inline-flex';
+      if (pwdStatus) pwdStatus.textContent = '';
+    }, 1500);
   });
 
   loadProfile();
