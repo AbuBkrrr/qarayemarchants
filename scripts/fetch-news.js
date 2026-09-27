@@ -55,7 +55,8 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false }
+  auth: { autoRefreshToken: false, persistSession: false },
+  realtime: { enabled: false }
 });
 
 const parser = new Parser({ timeout: 15000 });
