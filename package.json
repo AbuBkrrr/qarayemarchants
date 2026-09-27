@@ -19,7 +19,8 @@
     "astro": "^7.3.3",
     "browser-image-compression": "^2.0.2",
     "rss-parser": "^3.13.0",
-    "turndown": "^7.2.4"
+    "turndown": "^7.2.4",
+    "ws": "^8.22.0"
   },
   "allowScripts": {
     "esbuild": true

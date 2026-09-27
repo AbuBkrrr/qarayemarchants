@@ -1,16 +1,15 @@
 /**
  * Qaraye Marchants — Agriculture News Auto-Curator
- * Pulls RSS feeds, filters for agriculture/market relevance, inserts into qm_news.
- * Runs on schedule via GitHub Actions (.github/workflows/daily-news.yml)
+ * Pulls RSS feeds, filters for agriculture relevance, inserts into qm_news.
  */
 
 import 'dotenv/config';
 import Parser from 'rss-parser';
 import TurndownService from 'turndown';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
 const FEEDS = [
-  // Google News — Agriculture specific
   'https://news.google.com/rss/search?q=agriculture+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
   'https://news.google.com/rss/search?q=farming+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
   'https://news.google.com/rss/search?q=agricultural+produce+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
@@ -18,11 +17,9 @@ const FEEDS = [
   'https://news.google.com/rss/search?q=crop+harvest+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
   'https://news.google.com/rss/search?q=livestock+poultry+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
   'https://news.google.com/rss/search?q=grains+rice+maize+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
-  // Direct publisher feeds — Agriculture categories
   'https://nairametrics.com/category/agriculture/feed/',
   'https://businessday.ng/category/agriculture/feed/',
-  'https://punchng.com/topics/agriculture/feed/',
-  'https://guardian.ng/tag/agriculture/feed/'
+  'https://punchng.com/topics/agriculture/feed/'
 ];
 
 const KEYWORDS = [
@@ -56,7 +53,7 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
-  realtime: { enabled: false }
+  realtime: { transport: ws }
 });
 
 const parser = new Parser({ timeout: 15000 });
@@ -114,7 +111,6 @@ async function main() {
 
   console.log('Total raw items:', allItems.length);
 
-  // Filter + dedupe by link
   const seenLinks = new Set();
   const relevant = [];
   for (const item of allItems) {
@@ -126,10 +122,8 @@ async function main() {
 
   console.log('Relevant after filter:', relevant.length);
 
-  // Sort by newest
   relevant.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
 
-  // Take top N
   const toInsert = relevant.slice(0, MAX_PER_RUN);
 
   if (toInsert.length === 0) {
@@ -137,7 +131,6 @@ async function main() {
     return;
   }
 
-  // Build rows
   const rows = toInsert.map((item) => {
     const title = (item.title || '').trim();
     const slug = slugify(title) || ('news-' + Date.now());
@@ -152,7 +145,6 @@ async function main() {
     };
   });
 
-  // Filter out existing slugs
   const { data: existing } = await supabase.from('qm_news').select('slug');
   const existingSlugs = new Set((existing || []).map((r) => r.slug));
 
