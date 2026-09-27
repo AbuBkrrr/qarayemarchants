@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /verify-otp
+Disallow: /reset-password
+
+Sitemap: https://qarayemarchants.com.ng/sitemap.xml
