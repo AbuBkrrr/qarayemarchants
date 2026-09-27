@@ -18,4 +18,4 @@ export const ADMIN_DISPLAY_NAME = 'Qaraye Marchants Admin';
 // it maps to the email below and requires the admin password.
 // The account MUST have is_admin = true in the profiles table.
 export const ADMIN_USERNAME = 'admin';
-export const ADMIN_LOGIN_EMAIL = 'abizaea@gmail.com';
+export const ADMIN_LOGIN_EMAIL = 'admin@qarayemarchants.com.ng';
