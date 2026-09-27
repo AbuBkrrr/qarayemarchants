@@ -1,7 +1,7 @@
 /**
- * Qaraye Marchants — News auto-curator
- * Pulls RSS feeds, filters for relevance, inserts into qm_news table.
- * Run daily via GitHub Action (.github/workflows/daily-news.yml).
+ * Qaraye Marchants — Agriculture News Auto-Curator
+ * Pulls RSS feeds, filters for agriculture/market relevance, inserts into qm_news.
+ * Runs on schedule via GitHub Actions (.github/workflows/daily-news.yml)
  */
 
 import 'dotenv/config';
@@ -10,100 +10,170 @@ import TurndownService from 'turndown';
 import { createClient } from '@supabase/supabase-js';
 
 const FEEDS = [
-  'https://news.google.com/rss/search?q=business+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
-  'https://news.google.com/rss/search?q=personal+finance+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
-  'https://news.google.com/rss/search?q=real+estate+lagos&hl=en-NG&gl=NG&ceid=NG:en',
-  'https://news.google.com/rss/search?q=central+bank+of+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
-  'https://nairametrics.com/feed/',
-  'https://businessday.ng/feed/',
+  // Google News — Agriculture specific
+  'https://news.google.com/rss/search?q=agriculture+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  'https://news.google.com/rss/search?q=farming+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  'https://news.google.com/rss/search?q=agricultural+produce+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  'https://news.google.com/rss/search?q=food+prices+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  'https://news.google.com/rss/search?q=crop+harvest+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  'https://news.google.com/rss/search?q=livestock+poultry+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  'https://news.google.com/rss/search?q=grains+rice+maize+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
+  // Direct publisher feeds — Agriculture categories
+  'https://nairametrics.com/category/agriculture/feed/',
+  'https://businessday.ng/category/agriculture/feed/',
+  'https://punchng.com/topics/agriculture/feed/',
+  'https://guardian.ng/tag/agriculture/feed/'
 ];
 
 const KEYWORDS = [
-  'nigeria', 'naira', 'lagos', 'abuja', 'cbn', 'tax', 'mortgage',
-  'real estate', 'property', 'solar', 'investment', 'loan',
-  'business', 'startup', 'salary', 'savings', 'inflation',
-  'interest rate', 'housing', 'rent', 'bank', 'fintech', 'construction',
+  'farm', 'farmer', 'farming', 'agriculture', 'agricultural', 'agro',
+  'crop', 'harvest', 'planting', 'seed', 'seedling', 'fertilizer',
+  'livestock', 'poultry', 'cattle', 'goat', 'sheep', 'fish', 'fishery',
+  'rice', 'maize', 'cassava', 'yam', 'tomato', 'pepper', 'onion',
+  'grain', 'tuber', 'produce', 'food security', 'food prices',
+  'market', 'merchant', 'trade', 'commodity', 'supply chain',
+  'irrigation', 'pesticide', 'cocoa', 'groundnut', 'palm oil',
+  'nigeria', 'naira', 'kano', 'kaduna', 'benue', 'oyo', 'lagos',
+  'kebbi', 'sokoto', 'bauchi', 'jigawa', 'plateau', 'niger state'
 ];
 
 const BLOCKLIST = [
-  'celebrity', 'bikini', 'football score', 'horoscope',
-  'lottery result', 'betting odds',
+  'crypto', 'bitcoin', 'ethereum', 'nft', 'stock market', 'bond yield',
+  'forex trading', 'mutual fund', 'hedge fund', 'wall street',
+  'celebrity', 'bikini', 'football score', 'horoscope', 'betting odds',
+  'lottery result', 'movie', 'netflix', 'music video'
 ];
 
-const MAX_PER_RUN = 5;
+const MAX_PER_RUN = 20;
 
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  console.error('Missing PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_KEY');
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
+  auth: { autoRefreshToken: false, persistSession: false }
 });
 
-const parser = new Parser({ timeout: 15000, headers: { 'User-Agent': 'QM-Bot/1.0' } });
-const turndown = new TurndownService({ headingStyle: 'atx' });
+const parser = new Parser({ timeout: 15000 });
+const turndown = new TurndownService();
 
-function slugify(t) {
-  return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 100);
 }
 
 function isRelevant(item) {
-  const title = (item.title || '').toLowerCase();
-  if (title.length < 20) return false;
-  if (!KEYWORDS.some((k) => title.includes(k))) return false;
-  if (BLOCKLIST.some((b) => title.includes(b))) return false;
-  return true;
+  const text = ((item.title || '') + ' ' + (item.contentSnippet || item.content || '') + ' ' + (item.categories || []).join(' ')).toLowerCase();
+  const isBlocked = BLOCKLIST.some((word) => text.includes(word));
+  if (isBlocked) return false;
+  return KEYWORDS.some((word) => text.includes(word));
 }
 
-function cleanMarkdown(md) {
-  return String(md).replace(/^\s*---\s*$/gm, '').replace(/\r\n/g, '\n').trim();
+async function fetchFeed(url) {
+  try {
+    const feed = await parser.parseURL(url);
+    return feed.items || [];
+  } catch (err) {
+    console.warn('Feed failed:', url, '-', err.message);
+    return [];
+  }
 }
 
-async function run() {
-  let inserted = 0;
+function cleanDescription(item) {
+  const raw = item.contentSnippet || item.content || item.description || '';
+  return raw.replace(/<[^>]+>/g, '').trim().slice(0, 280);
+}
 
+function cleanBody(item) {
+  const raw = item['content:encoded'] || item.content || item.description || '';
+  try {
+    return turndown.turndown(raw).slice(0, 4000);
+  } catch {
+    return raw.replace(/<[^>]+>/g, '').slice(0, 4000);
+  }
+}
+
+async function main() {
+  console.log('Starting news curation...');
+
+  const allItems = [];
   for (const url of FEEDS) {
-    try {
-      const feed = await parser.parseURL(url);
-      console.log('Feed: ' + (feed.title || url) + ' — ' + feed.items.length + ' items');
-
-      for (const item of feed.items) {
-        if (inserted >= MAX_PER_RUN) break;
-        if (!isRelevant(item)) continue;
-
-        const slug = slugify(item.title);
-        const { data: existing } = await supabase
-          .from('qm_news')
-          .select('id')
-          .eq('slug', slug)
-          .maybeSingle();
-        if (existing) continue;
-
-        const md = cleanMarkdown(turndown.turndown(item.content || item.contentSnippet || ''));
-        const { error } = await supabase.from('qm_news').insert({
-          slug: slug,
-          title: item.title,
-          description: (item.contentSnippet || item.title).slice(0, 160),
-          source_name: feed.title || 'News',
-          source_url: item.link,
-          content_markdown: md.slice(0, 8000),
-          language: 'en',
-        });
-
-        if (error) { console.error('Insert failed: ' + error.message); continue; }
-        console.log('Inserted: ' + slug);
-        inserted++;
-      }
-    } catch (err) {
-      console.error('Feed error (' + url + '): ' + err.message);
-    }
+    console.log('Fetching:', url);
+    const items = await fetchFeed(url);
+    console.log('  Got', items.length, 'items');
+    allItems.push(...items);
   }
 
-  console.log('\nTotal inserted: ' + inserted);
+  console.log('Total raw items:', allItems.length);
+
+  // Filter + dedupe by link
+  const seenLinks = new Set();
+  const relevant = [];
+  for (const item of allItems) {
+    if (!item.link || seenLinks.has(item.link)) continue;
+    if (!isRelevant(item)) continue;
+    seenLinks.add(item.link);
+    relevant.push(item);
+  }
+
+  console.log('Relevant after filter:', relevant.length);
+
+  // Sort by newest
+  relevant.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+
+  // Take top N
+  const toInsert = relevant.slice(0, MAX_PER_RUN);
+
+  if (toInsert.length === 0) {
+    console.log('No relevant news to insert.');
+    return;
+  }
+
+  // Build rows
+  const rows = toInsert.map((item) => {
+    const title = (item.title || '').trim();
+    const slug = slugify(title) || ('news-' + Date.now());
+    return {
+      slug,
+      title,
+      description: cleanDescription(item),
+      body: cleanBody(item),
+      source_name: item.creator || item.author || 'News',
+      source_url: item.link,
+      published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString()
+    };
+  });
+
+  // Filter out existing slugs
+  const { data: existing } = await supabase.from('qm_news').select('slug');
+  const existingSlugs = new Set((existing || []).map((r) => r.slug));
+
+  const newRows = rows.filter((r) => !existingSlugs.has(r.slug));
+  console.log('New rows to insert:', newRows.length);
+
+  if (newRows.length === 0) {
+    console.log('All items already in database.');
+    return;
+  }
+
+  const { error } = await supabase.from('qm_news').insert(newRows);
+
+  if (error) {
+    console.error('Insert failed:', error.message);
+    process.exit(1);
+  }
+
+  console.log('Inserted', newRows.length, 'news items.');
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+main().catch((err) => {
+  console.error('Fatal:', err);
+  process.exit(1);
+});
