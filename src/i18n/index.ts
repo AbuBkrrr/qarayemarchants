@@ -1,24 +1,30 @@
+/**
+ * i18n module — re-exports translations plus small helpers.
+ */
+
 import { translations, languages, type LanguageCode } from './translations';
 
 export { translations, languages };
 export type { LanguageCode };
 
-const STORAGE_KEY = 'qm_lang';
-const DEFAULT_LANG: LanguageCode = 'en';
+const STORAGE_KEY = 'qm-language';
 
 export function getStoredLanguage(): LanguageCode {
-  if (typeof localStorage === 'undefined') return DEFAULT_LANG;
-  const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
-  if (stored && translations[stored]) return stored;
-  return DEFAULT_LANG;
+  if (typeof localStorage === 'undefined') return 'en';
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
+    if (saved && translations[saved]) return saved;
+  } catch {}
+  return 'en';
 }
 
 export function setStoredLanguage(lang: LanguageCode): void {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, lang);
-  document.documentElement.lang = lang;
+  try {
+    localStorage.setItem(STORAGE_KEY, lang);
+  } catch {}
 }
 
 export function t(lang: LanguageCode, key: string): string {
-  return translations[lang]?.[key] ?? translations.en[key] ?? key;
+  return translations[lang]?.[key] || translations.en[key] || key;
 }
