@@ -16,6 +16,7 @@
     "@astrojs/vercel": "^11.0.10",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
+    "@vercel/analytics": "^2.0.1",
     "astro": "^7.3.3",
     "browser-image-compression": "^2.0.2",
     "rss-parser": "^3.13.0",
