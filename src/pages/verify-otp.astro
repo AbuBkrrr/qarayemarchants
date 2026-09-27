@@ -1,0 +1,174 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Enter Reset Code - Qaraye Marchants">
+  <div class="container" style="padding: 60px 24px; max-width: 460px;">
+
+    <a href="/forgot-password" style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px;">&larr; Back</a>
+
+    <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 8px 0; color: var(--ink);">Enter Reset Code</h1>
+    <p style="color: var(--ink-muted); margin-bottom: 8px;">We sent a 6-digit code to:</p>
+    <p id="target-email" style="font-family: var(--mono); font-size: 13.5px; color: var(--cyan); margin: 0 0 32px 0;">-</p>
+
+    <!-- STEP 1: Enter code -->
+    <div id="code-step">
+      <form id="code-form" style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label for="otp-input" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">6-DIGIT CODE</label>
+          <input type="text" id="otp-input" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="000000"
+                 style="width: 100%; padding: 16px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--mono); font-size: 24px; letter-spacing: 8px; text-align: center; font-weight: 700;">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 14px;">Verify Code</button>
+      </form>
+
+      <div style="margin-top: 20px; text-align: center;">
+        <button id="resend-btn" type="button" style="background: none; border: none; font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); cursor: pointer; text-decoration: underline;">
+          Didn't get the code? Resend
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Set new password -->
+    <div id="password-step" style="display: none;">
+      <div style="padding: 14px; background: rgba(16,217,130,0.1); border: 1px solid var(--green); border-radius: var(--r-md); margin-bottom: 24px;">
+        <p style="margin: 0; color: var(--green); font-family: var(--mono); font-size: 12px;">Code verified. Now set your new password.</p>
+      </div>
+
+      <form id="password-form" style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label for="new-password" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">NEW PASSWORD</label>
+          <input type="password" id="new-password" required minlength="6" autocomplete="new-password"
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+
+        <div>
+          <label for="confirm-password" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">CONFIRM PASSWORD</label>
+          <input type="password" id="confirm-password" required minlength="6" autocomplete="new-password"
+                 style="width: 100%; padding: 12px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body);">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 14px;">Save New Password</button>
+      </form>
+    </div>
+
+    <p id="status" style="margin-top: 20px; font-family: var(--mono); font-size: 13px; text-align: center;"></p>
+
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const email = urlParams.get('email') || '';
+
+  const targetEmail = document.getElementById('target-email')!;
+  const codeStep = document.getElementById('code-step')!;
+  const passwordStep = document.getElementById('password-step')!;
+  const codeForm = document.getElementById('code-form') as HTMLFormElement;
+  const passwordForm = document.getElementById('password-form') as HTMLFormElement;
+  const otpInput = document.getElementById('otp-input') as HTMLInputElement;
+  const newPwd = document.getElementById('new-password') as HTMLInputElement;
+  const confirmPwd = document.getElementById('confirm-password') as HTMLInputElement;
+  const statusEl = document.getElementById('status')!;
+  const resendBtn = document.getElementById('resend-btn') as HTMLButtonElement;
+
+  if (!email) {
+    statusEl.textContent = 'No email provided. Please start over.';
+    statusEl.style.color = 'var(--red)';
+    codeStep.style.display = 'none';
+  } else {
+    targetEmail.textContent = email;
+  }
+
+  // Auto-focus and auto-format OTP input
+  otpInput.addEventListener('input', () => {
+    otpInput.value = otpInput.value.replace(/[^0-9]/g, '').slice(0, 6);
+  });
+
+  // Step 1: Verify OTP
+  codeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = otpInput.value.trim();
+
+    if (code.length !== 6) {
+      statusEl.textContent = 'Please enter the full 6-digit code.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    statusEl.textContent = 'Verifying code...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'recovery'
+    });
+
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    // Session is now established
+    statusEl.textContent = '';
+    codeStep.style.display = 'none';
+    passwordStep.style.display = 'block';
+    newPwd.focus();
+  });
+
+  // Step 2: Update password
+  passwordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (newPwd.value !== confirmPwd.value) {
+      statusEl.textContent = 'Passwords do not match.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+    if (newPwd.value.length < 6) {
+      statusEl.textContent = 'Password must be at least 6 characters.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    statusEl.textContent = 'Saving new password...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const { error } = await supabase.auth.updateUser({ password: newPwd.value });
+
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    statusEl.textContent = 'Password updated! Redirecting...';
+    statusEl.style.color = 'var(--green)';
+    setTimeout(() => window.location.href = '/', 1200);
+  });
+
+  // Resend code
+  resendBtn.addEventListener('click', async () => {
+    if (!email) return;
+    resendBtn.disabled = true;
+    statusEl.textContent = 'Resending code...';
+    statusEl.style.color = 'var(--ink-muted)';
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+    if (error) {
+      statusEl.textContent = 'Error: ' + error.message;
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = 'New code sent. Check your email.';
+      statusEl.style.color = 'var(--green)';
+    }
+
+    setTimeout(() => { resendBtn.disabled = false; }, 30000);
+  });
+</script>
