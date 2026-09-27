@@ -420,9 +420,8 @@ const year = new Date().getFullYear();
     const langDropdown = document.getElementById('lang-dropdown');
     langBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      langDropdown?.classList.toggle('open');
+
     });
-    document.addEventListener('click', () => langDropdown?.classList.remove('open'));
 
     // Auth state
     const authButtons = document.getElementById('auth-buttons');
