@@ -19,6 +19,34 @@ const year = new Date().getFullYear();
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <!-- Google Search Console Verification -->
+  <meta name="google-site-verification" content="o0ugxFVOtpkiqDHvWZBMyo_FhHdIV7R8x6b-EOlBiuQ" />
+
+  <!-- Google AdSense -->
+  <meta name="google-adsense-account" content="ca-pub-2229008759020664" />
+  <script is:inline async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+  <!-- Canonical -->
+  <link rel="canonical" href={`https://qarayemarchants.com.ng${Astro.url.pathname}`} />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Qaraye Marchants" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={`https://qarayemarchants.com.ng${Astro.url.pathname}`} />
+  <meta property="og:image" content="https://qarayemarchants.com.ng/og-default.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content="https://qarayemarchants.com.ng/og-default.png" />
+
+  <meta name="theme-color" content="#00e5ff" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
