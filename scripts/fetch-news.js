@@ -18,8 +18,7 @@ const FEEDS = [
   'https://news.google.com/rss/search?q=livestock+poultry+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
   'https://news.google.com/rss/search?q=grains+rice+maize+nigeria&hl=en-NG&gl=NG&ceid=NG:en',
   'https://nairametrics.com/category/agriculture/feed/',
-  'https://businessday.ng/category/agriculture/feed/',
-  'https://punchng.com/topics/agriculture/feed/'
+  'https://businessday.ng/category/agriculture/feed/'
 ];
 
 const KEYWORDS = [
