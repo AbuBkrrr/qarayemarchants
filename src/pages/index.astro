@@ -107,7 +107,7 @@ feed.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).
 
     <!-- Hero -->
     <div style="text-align: center; padding: 20px 0 40px;">
-      <span style="display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: var(--cyan); background: var(--cyan-soft); padding: 6px 14px; border-radius: var(--r-full); margin-bottom: 16px;">TRENDING</span>
+      <span style="display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: var(--cyan); background: var(--cyan-soft); padding: 6px 14px; border-radius: var(--r-full); margin-bottom: 16px;"><span data-i18n="tabTrending">TRENDING</span></span>
       <h1 style="font-family: var(--display); font-size: 2.6rem; margin: 0 0 12px 0; color: var(--ink); font-weight: 800; line-height: 1.15;">Qaraye Marchants.</h1>
       <p style="font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--ink-muted); margin: 0 0 24px 0;">NIGERIA&#39;S AGRICULTURAL MARKETPLACE</p>
       <p style="max-width: 560px; margin: 0 auto; color: var(--ink-muted); font-size: 0.95rem; line-height: 1.6;">
@@ -118,9 +118,9 @@ feed.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).
     <!-- Feed Controls -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
       <div id="feed-tabs" style="display: flex; gap: 4px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full);">
-        <button class="feed-tab active" data-filter="all" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: var(--r-full); border: none; cursor: pointer; background: var(--cyan); color: var(--bg-950);">All</button>
-        <button class="feed-tab" data-filter="community" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);">Community</button>
-        <button class="feed-tab" data-filter="news" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);">News</button>
+        <button class="feed-tab active" data-filter="all" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: var(--r-full); border: none; cursor: pointer; background: var(--cyan); color: var(--bg-950);"><span data-i18n="tabAll">All</span></button>
+        <button class="feed-tab" data-filter="community" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);"><span data-i18n="tabCommunity">Community</span></button>
+        <button class="feed-tab" data-filter="news" style="font-family: var(--body); font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: var(--r-full); border: none; cursor: pointer; background: transparent; color: var(--ink-muted);"><span data-i18n="tabNews">News</span></button>
       </div>
 
       <div id="view-toggle" style="display: flex; gap: 4px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full);">
