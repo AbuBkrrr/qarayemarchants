@@ -108,7 +108,7 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { supabase } from '../lib/supabase';
-  import { ADMIN_USERNAME, ADMIN_EMAIL } from '../config';
+  import { ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from '../config';
 
   const tabSignin = document.getElementById('tab-signin') as HTMLButtonElement;
   const tabSignup = document.getElementById('tab-signup') as HTMLButtonElement;
@@ -188,7 +188,7 @@ import Layout from '../layouts/Layout.astro';
     if (isAdminMode) {
       // In admin mode, map username to admin email
       if (idValue.toLowerCase() === ADMIN_USERNAME.toLowerCase()) {
-        email = ADMIN_EMAIL;
+        email = ADMIN_LOGIN_EMAIL;
         isAdminAttempt = true;
       } else {
         // If they entered an email, use it as-is and still verify admin status
