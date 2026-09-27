@@ -8,29 +8,28 @@ import Layout from '../layouts/Layout.astro';
     <a href="/forgot-password" style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px;">&larr; Back</a>
 
     <h1 style="font-family: var(--display); font-size: 2rem; margin: 0 0 8px 0; color: var(--ink);">Enter Reset Code</h1>
-    <p style="color: var(--ink-muted); margin-bottom: 8px;">We sent a 6-digit code to:</p>
+    <p style="color: var(--ink-muted); margin-bottom: 8px;">We sent a code to:</p>
     <p id="target-email" style="font-family: var(--mono); font-size: 13.5px; color: var(--cyan); margin: 0 0 32px 0;">-</p>
 
-    <!-- STEP 1: Enter code -->
     <div id="code-step">
       <form id="code-form" style="display: flex; flex-direction: column; gap: 16px;">
         <div>
-          <label for="otp-input" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">6-DIGIT CODE</label>
-          <input type="text" id="otp-input" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="000000"
-                 style="width: 100%; padding: 16px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--mono); font-size: 24px; letter-spacing: 8px; text-align: center; font-weight: 700;">
+          <label for="otp-input" style="display: block; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; color: var(--ink-muted);">CODE FROM EMAIL</label>
+          <input type="text" id="otp-input" required inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code"
+                 style="width: 100%; padding: 16px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--mono); font-size: 22px; letter-spacing: 6px; text-align: center; font-weight: 700;">
+          <p style="font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin: 6px 0 0 0; text-align: center;">Enter the full code exactly as shown in the email</p>
         </div>
 
         <button type="submit" class="btn btn-primary" style="padding: 14px;">Verify Code</button>
       </form>
 
       <div style="margin-top: 20px; text-align: center;">
-        <button id="resend-btn" type="button" style="background: none; border: none; font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); cursor: pointer; text-decoration: underline;">
+        <button id="resend-btn" type="button" style="background: none; border: none; font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); cursor: pointer;">
           Didn't get the code? Resend
         </button>
       </div>
     </div>
 
-    <!-- STEP 2: Set new password -->
     <div id="password-step" style="display: none;">
       <div style="padding: 14px; background: rgba(16,217,130,0.1); border: 1px solid var(--green); border-radius: var(--r-md); margin-bottom: 24px;">
         <p style="margin: 0; color: var(--green); font-family: var(--mono); font-size: 12px;">Code verified. Now set your new password.</p>
@@ -75,17 +74,63 @@ import Layout from '../layouts/Layout.astro';
   const statusEl = document.getElementById('status')!;
   const resendBtn = document.getElementById('resend-btn') as HTMLButtonElement;
 
+  // ---------- Resend Countdown ----------
+  const SENT_KEY = 'qm-otp-sent-at';
+  const RATE_LIMIT_SECONDS = 90;
+  let countdownTimer: number | null = null;
+
+  function updateResendButton() {
+    const lastSent = parseInt(sessionStorage.getItem(SENT_KEY) || '0', 10);
+    const elapsed = lastSent ? Math.floor((Date.now() - lastSent) / 1000) : RATE_LIMIT_SECONDS;
+    const remaining = Math.max(0, RATE_LIMIT_SECONDS - elapsed);
+
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+
+    if (remaining <= 0) {
+      resendBtn.disabled = false;
+      resendBtn.style.cursor = 'pointer';
+      resendBtn.style.opacity = '1';
+      resendBtn.textContent = "Didn't get the code? Resend";
+      return;
+    }
+
+    resendBtn.disabled = true;
+    resendBtn.style.cursor = 'not-allowed';
+    resendBtn.style.opacity = '0.6';
+
+    let r = remaining;
+    const tick = () => {
+      resendBtn.textContent = 'Resend available in ' + r + 's';
+      if (r <= 0) {
+        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+        resendBtn.disabled = false;
+        resendBtn.style.cursor = 'pointer';
+        resendBtn.style.opacity = '1';
+        resendBtn.textContent = "Didn't get the code? Resend";
+      }
+      r--;
+    };
+    tick();
+    countdownTimer = window.setInterval(tick, 1000);
+  }
+
   if (!email) {
     statusEl.textContent = 'No email provided. Please start over.';
     statusEl.style.color = 'var(--red)';
     codeStep.style.display = 'none';
   } else {
     targetEmail.textContent = email;
+    updateResendButton();
   }
 
-  // Auto-focus and auto-format OTP input
+  // Strip non-digits as user types (allow up to 10 digits)
   otpInput.addEventListener('input', () => {
-    otpInput.value = otpInput.value.replace(/[^0-9]/g, '').slice(0, 6);
+    otpInput.value = otpInput.value.replace(/[^0-9]/g, '').slice(0, 10);
+  });
+
+  // Auto-submit when we have at least 6 digits and code matches typical length
+  otpInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') codeForm.requestSubmit();
   });
 
   // Step 1: Verify OTP
@@ -93,8 +138,8 @@ import Layout from '../layouts/Layout.astro';
     e.preventDefault();
     const code = otpInput.value.trim();
 
-    if (code.length !== 6) {
-      statusEl.textContent = 'Please enter the full 6-digit code.';
+    if (code.length < 6) {
+      statusEl.textContent = 'Please enter the full code from your email.';
       statusEl.style.color = 'var(--red)';
       return;
     }
@@ -114,7 +159,6 @@ import Layout from '../layouts/Layout.astro';
       return;
     }
 
-    // Session is now established
     statusEl.textContent = '';
     codeStep.style.display = 'none';
     passwordStep.style.display = 'block';
@@ -154,9 +198,9 @@ import Layout from '../layouts/Layout.astro';
 
   // Resend code
   resendBtn.addEventListener('click', async () => {
-    if (!email) return;
-    resendBtn.disabled = true;
-    statusEl.textContent = 'Resending code...';
+    if (!email || resendBtn.disabled) return;
+
+    statusEl.textContent = 'Sending new code...';
     statusEl.style.color = 'var(--ink-muted)';
 
     const { error } = await supabase.auth.resetPasswordForEmail(email);
@@ -164,11 +208,21 @@ import Layout from '../layouts/Layout.astro';
     if (error) {
       statusEl.textContent = 'Error: ' + error.message;
       statusEl.style.color = 'var(--red)';
-    } else {
-      statusEl.textContent = 'New code sent. Check your email.';
-      statusEl.style.color = 'var(--green)';
+
+      // If Supabase returns rate-limit, restart countdown from the reported wait
+      const match = error.message.match(/(\d+)\s*second/);
+      if (match) {
+        const wait = parseInt(match[1], 10);
+        sessionStorage.setItem(SENT_KEY, String(Date.now() - (RATE_LIMIT_SECONDS - wait) * 1000));
+        updateResendButton();
+      }
+      return;
     }
 
-    setTimeout(() => { resendBtn.disabled = false; }, 30000);
+    statusEl.textContent = 'New code sent. Check your email.';
+    statusEl.style.color = 'var(--green)';
+
+    sessionStorage.setItem(SENT_KEY, String(Date.now()));
+    updateResendButton();
   });
 </script>
