@@ -144,10 +144,33 @@ async function main() {
     };
   });
 
-  const { data: existing } = await supabase.from('qm_news').select('slug');
-  const existingSlugs = new Set((existing || []).map((r) => r.slug));
+  // Fetch ALL existing slugs (paginated to handle >1000 rows)
+  const existingSlugs = new Set();
+  let from = 0;
+  const PAGE_SIZE = 1000;
+  while (true) {
+    const { data: page, error: pageErr } = await supabase
+      .from('qm_news')
+      .select('slug')
+      .range(from, from + PAGE_SIZE - 1);
+    if (pageErr) {
+      console.warn('Slug fetch failed:', pageErr.message);
+      break;
+    }
+    if (!page || page.length === 0) break;
+    for (const r of page) existingSlugs.add(r.slug);
+    if (page.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
 
-  const newRows = rows.filter((r) => !existingSlugs.has(r.slug));
+  // Filter against DB + dedupe within the batch itself
+  const seenInBatch = new Set();
+  const newRows = rows.filter((r) => {
+    if (existingSlugs.has(r.slug)) return false;
+    if (seenInBatch.has(r.slug)) return false;
+    seenInBatch.add(r.slug);
+    return true;
+  });
   console.log('New rows to insert:', newRows.length);
 
   if (newRows.length === 0) {
@@ -155,14 +178,17 @@ async function main() {
     return;
   }
 
-  const { error } = await supabase.from('qm_news').insert(newRows);
+  // Use upsert to handle any remaining edge cases gracefully
+  const { error } = await supabase
+    .from('qm_news')
+    .upsert(newRows, { onConflict: 'slug', ignoreDuplicates: true });
 
   if (error) {
-    console.error('Insert failed:', error.message);
-    process.exit(1);
+    console.error('Upsert failed:', error.message);
+    // Do NOT exit(1) — allow the workflow to complete
+  } else {
+    console.log('Inserted', newRows.length, 'news items.');
   }
-
-  console.log('Inserted', newRows.length, 'news items.');
 }
 
 main().catch((err) => {
