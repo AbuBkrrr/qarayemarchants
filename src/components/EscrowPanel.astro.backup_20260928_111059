@@ -1,0 +1,260 @@
+---
+interface Props {
+  productId: string;
+  productName: string;
+  amount: number;
+  currency?: string;
+  sellerName: string;
+  sellerVerified?: boolean;
+}
+
+const {
+  productId,
+  productName,
+  amount,
+  currency = 'NGN',
+  sellerName,
+  sellerVerified = false,
+} = Astro.props;
+
+const ngn = (v: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v);
+
+const formatted = ngn(amount);
+
+const feeTiers = [
+  { upTo: 500000,     rate: 0.025, min: 2000 },
+  { upTo: 2000000,    rate: 0.02,  min: 5000 },
+  { upTo: 10000000,   rate: 0.015, min: 15000 },
+  { upTo: Infinity,   rate: 0.01,  min: 50000 },
+];
+const tier = feeTiers.find(t => amount <= t.upTo)!;
+const escrowFee = Math.max(tier.min, Math.round(amount * tier.rate));
+const total = amount + escrowFee;
+---
+
+<div class="escrow-panel">
+  <div class="escrow-header">
+    <span class="escrow-badge">Escrow Protected</span>
+    {sellerVerified && <span class="verified-badge">Verified Merchant</span>}
+  </div>
+
+  <h3 class="escrow-title">Secure this purchase</h3>
+  <p class="escrow-sub">
+    Your payment is held by a licensed escrow partner until you confirm delivery.
+    If the goods don't arrive as described, you get a full refund.
+  </p>
+
+  <dl class="escrow-breakdown">
+    <div><dt>Product</dt><dd>{productName}</dd></div>
+    <div><dt>Seller</dt><dd>{sellerName}</dd></div>
+    <div><dt>Item price</dt><dd>{formatted}</dd></div>
+    <div><dt>Escrow protection fee</dt><dd>{ngn(escrowFee)}</dd></div>
+    <div class="escrow-total"><dt>Total</dt><dd>{ngn(total)}</dd></div>
+  </dl>
+
+  <div class="escrow-actions">
+    <button
+      type="button"
+      class="escrow-btn escrow-btn-primary"
+      data-escrow-start
+      data-product-id={productId}
+      data-amount={amount}
+      data-currency={currency}
+    >
+      Pay {ngn(total)} into escrow
+    </button>
+    <a href="/escrow/how-it-works" class="escrow-btn escrow-btn-secondary">
+      How escrow works
+    </a>
+  </div>
+
+  <ul class="escrow-trust">
+    <li>Funds held by a licensed provider, not by Qaraye</li>
+    <li>Released only when you confirm receipt</li>
+    <li>7-day dispute window after delivery</li>
+    <li>Works for local and cross-border payments</li>
+  </ul>
+
+  <div class="escrow-status" data-escrow-status role="status" aria-live="polite"></div>
+</div>
+
+<style>
+  .escrow-panel {
+    background: linear-gradient(160deg, var(--bg-850, #0f1526), var(--bg-900, #0a0f1d));
+    border: 1px solid var(--cyan, #00e5ff);
+    border-radius: 14px;
+    padding: 22px;
+    color: var(--ink, #f0f4ff);
+  }
+  .escrow-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .escrow-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 229, 255, 0.12);
+    border: 1px solid rgba(0, 229, 255, 0.4);
+    color: var(--cyan, #00e5ff);
+    font-family: var(--mono, monospace);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .verified-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(16, 217, 130, 0.12);
+    border: 1px solid rgba(16, 217, 130, 0.5);
+    color: var(--green, #10d982);
+    font-family: var(--mono, monospace);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .escrow-title {
+    margin: 0 0 6px;
+    font-family: var(--display, sans-serif);
+    font-size: 19px;
+    font-weight: 700;
+  }
+  .escrow-sub {
+    margin: 0 0 18px;
+    color: var(--ink-muted, #8b95b8);
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+  .escrow-breakdown {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .escrow-breakdown > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+  }
+  .escrow-breakdown dt { color: var(--ink-muted, #8b95b8); margin: 0; }
+  .escrow-breakdown dd { margin: 0; font-family: var(--mono, monospace); font-weight: 600; }
+  .escrow-total {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 10px;
+    margin-top: 4px;
+    font-size: 15px !important;
+  }
+  .escrow-total dt, .escrow-total dd { color: var(--cyan, #00e5ff) !important; }
+  .escrow-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .escrow-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: var(--body, sans-serif);
+    transition: all 0.15s ease;
+  }
+  .escrow-btn-primary {
+    background: var(--cyan, #00e5ff);
+    color: #051018;
+  }
+  .escrow-btn-primary:hover { background: #33ebff; }
+  .escrow-btn-secondary {
+    background: transparent;
+    color: var(--ink, #f0f4ff);
+    border-color: rgba(255,255,255,0.15);
+    font-size: 13px;
+    padding: 10px 18px;
+  }
+  .escrow-btn-secondary:hover { border-color: var(--cyan, #00e5ff); color: var(--cyan, #00e5ff); }
+  .escrow-trust {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink-muted, #8b95b8);
+  }
+  .escrow-status {
+    margin-top: 12px;
+    font-family: var(--mono, monospace);
+    font-size: 12px;
+    color: var(--cyan, #00e5ff);
+    min-height: 16px;
+  }
+</style>
+
+<script>
+  (function attachEscrowHandlers() {
+    const attach = () => {
+      document.querySelectorAll('[data-escrow-start]').forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+
+        btn.addEventListener('click', async () => {
+          const productId = btn.dataset.productId;
+          const amount = btn.dataset.amount;
+          const currency = btn.dataset.currency;
+          const status = btn.closest('.escrow-panel')?.querySelector('[data-escrow-status]');
+
+          if (status) status.textContent = 'Initiating secure escrow...';
+          btn.disabled = true;
+
+          try {
+            const res = await fetch('/api/escrow/initiate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId, amount, currency }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+              throw new Error(data.error || 'Escrow initiation failed');
+            }
+
+            if (data.checkoutUrl) {
+              if (status) status.textContent = 'Redirecting to secure checkout...';
+              window.location.href = data.checkoutUrl;
+            } else {
+              throw new Error('No checkout URL returned by provider');
+            }
+          } catch (err) {
+            if (status) status.textContent = 'Warning: ' + err.message;
+            btn.disabled = false;
+          }
+        });
+      });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attach);
+    } else {
+      attach();
+    }
+    document.addEventListener('astro:page-load', attach);
+  })();
+</script>

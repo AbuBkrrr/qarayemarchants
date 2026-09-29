@@ -1,0 +1,264 @@
+---
+interface Props {
+  url: string;
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const { url, title, description = '', image = '/og-default.png' } = Astro.props;
+
+const encodedUrl = encodeURIComponent(url);
+const encodedTitle = encodeURIComponent(title);
+const encodedDesc = encodeURIComponent(description);
+
+const shareTargets = [
+  { key: 'whatsapp', label: 'WhatsApp', href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`, icon: 'whatsapp' },
+  { key: 'facebook', label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, icon: 'facebook' },
+  { key: 'x', label: 'X', href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`, icon: 'x' },
+  { key: 'linkedin', label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`, icon: 'linkedin' },
+  { key: 'telegram', label: 'Telegram', href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`, icon: 'telegram' },
+  { key: 'email', label: 'Email', href: `mailto:?subject=${encodedTitle}&body=${encodedDesc}%0A%0A${encodedUrl}`, icon: 'email' },
+];
+---
+
+<div class="share-widget" data-share-url={url} data-share-title={title}>
+  <p class="share-label">Share this listing</p>
+
+  <div class="share-grid">
+    {shareTargets.map(t => (
+      <a
+        class="share-btn"
+        href={t.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Share on ${t.label}`}
+        data-share={t.key}
+      >
+        <span class={`share-icon share-icon-${t.icon}`}></span>
+        <span class="share-btn-label">{t.label}</span>
+      </a>
+    ))}
+
+    <button class="share-btn" type="button" data-action="native-share" aria-label="Open native share">
+      <span class="share-icon share-icon-share"></span>
+      <span class="share-btn-label">More</span>
+    </button>
+
+    <button class="share-btn" type="button" data-action="copy-link" aria-label="Copy link">
+      <span class="share-icon share-icon-copy"></span>
+      <span class="share-btn-label">Copy link</span>
+    </button>
+
+    <button class="share-btn" type="button" data-action="show-qr" aria-label="Show QR code">
+      <span class="share-icon share-icon-qr"></span>
+      <span class="share-btn-label">QR code</span>
+    </button>
+  </div>
+
+  <div class="share-feedback" role="status" aria-live="polite"></div>
+
+  <div class="qr-modal" data-qr-modal hidden>
+    <div class="qr-modal-inner">
+      <button class="qr-close" type="button" data-action="close-qr" aria-label="Close">x</button>
+      <p class="qr-title">Scan to open</p>
+      <div class="qr-canvas-wrap" data-qr-target></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .share-widget {
+    background: var(--bg-900, #0a0f1d);
+    border: 1px solid var(--card-border, rgba(0, 229, 255, 0.16));
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .share-label {
+    font-family: var(--mono, monospace);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--ink-muted, #8b95b8);
+    margin: 0 0 14px;
+  }
+  .share-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .share-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: var(--bg-850, #0f1526);
+    border: 1px solid var(--line-soft, rgba(255,255,255,0.06));
+    border-radius: 10px;
+    color: var(--ink, #f0f4ff);
+    text-decoration: none;
+    font-family: var(--body, sans-serif);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .share-btn:hover {
+    background: var(--bg-800, #141b30);
+    border-color: var(--cyan, #00e5ff);
+    transform: translateY(-1px);
+  }
+  .share-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .share-icon-whatsapp::after  { content: "\1F4AC"; font-size: 20px; }
+  .share-icon-facebook::after  { content: "\1F4D8"; font-size: 20px; }
+  .share-icon-x::after         { content: "\1D54F"; font-size: 20px; color: #fff; }
+  .share-icon-linkedin::after  { content: "\1F4BC"; font-size: 20px; }
+  .share-icon-telegram::after  { content: "\2708"; font-size: 20px; }
+  .share-icon-email::after     { content: "\2709"; font-size: 20px; }
+  .share-icon-share::after     { content: "\1F517"; font-size: 20px; }
+  .share-icon-copy::after      { content: "\1F4CB"; font-size: 20px; }
+  .share-icon-qr::after        { content: "\2B1B"; font-size: 20px; }
+
+  .share-btn-label {
+    color: var(--ink-muted, #8b95b8);
+    font-size: 10.5px;
+  }
+
+  .share-feedback {
+    margin-top: 12px;
+    font-family: var(--mono, monospace);
+    font-size: 11px;
+    color: var(--cyan, #00e5ff);
+    min-height: 14px;
+  }
+
+  .qr-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .qr-modal[hidden] { display: none; }
+  .qr-modal-inner {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 320px;
+    width: 100%;
+    position: relative;
+    text-align: center;
+  }
+  .qr-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+  }
+  .qr-title {
+    margin: 0 0 16px;
+    color: #0a1628;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .qr-canvas-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+  }
+  .qr-canvas-wrap img,
+  .qr-canvas-wrap canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 480px) {
+    .share-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+
+<script>
+  (function attachShareHandlers() {
+    const attach = () => {
+      document.querySelectorAll('.share-widget').forEach((widget) => {
+        if (widget.dataset.bound === '1') return;
+        widget.dataset.bound = '1';
+
+        const url = widget.dataset.shareUrl || window.location.href;
+        const title = widget.dataset.shareTitle || document.title;
+        const feedback = widget.querySelector('.share-feedback');
+        const qrModal = widget.querySelector('[data-qr-modal]');
+        const qrTarget = widget.querySelector('[data-qr-target]');
+
+        const showFeedback = (msg) => {
+          if (!feedback) return;
+          feedback.textContent = msg;
+          setTimeout(() => { feedback.textContent = ''; }, 2500);
+        };
+
+        widget.querySelector('[data-action="native-share"]')?.addEventListener('click', async () => {
+          if (navigator.share) {
+            try {
+              await navigator.share({ title, url });
+              showFeedback('Shared');
+            } catch { }
+          } else {
+            try {
+              await navigator.clipboard.writeText(url);
+              showFeedback('Link copied (no native share)');
+            } catch {
+              showFeedback('Sharing not supported');
+            }
+          }
+        });
+
+        widget.querySelector('[data-action="copy-link"]')?.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(url);
+            showFeedback('Link copied to clipboard');
+          } catch {
+            showFeedback('Copy failed - long-press to copy manually');
+          }
+        });
+
+        widget.querySelector('[data-action="show-qr"]')?.addEventListener('click', () => {
+          if (!qrModal || !qrTarget) return;
+          qrTarget.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(url) + '" alt="QR code" />';
+          qrModal.hidden = false;
+        });
+
+        qrModal?.querySelector('[data-action="close-qr"]')?.addEventListener('click', () => {
+          if (qrModal) qrModal.hidden = true;
+        });
+        qrModal?.addEventListener('click', (e) => {
+          if (e.target === qrModal) qrModal.hidden = true;
+        });
+      });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attach);
+    } else {
+      attach();
+    }
+    document.addEventListener('astro:page-load', attach);
+  })();
+</script>

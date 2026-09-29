@@ -19,24 +19,7 @@ function applyTranslations(lang: LanguageCode) {
     const key = el.getAttribute('data-i18n');
     if (!key) return;
     const value = dict[key];
-    if (!value) return;
-
-    // If element has data-i18n-attr, translate an attribute (e.g., placeholder)
-    const attrName = el.getAttribute('data-i18n-attr');
-    if (attrName) {
-      el.setAttribute(attrName, value);
-      return;
-    }
-
-    // Safe swap: replace only text nodes, preserving child elements (SVG icons etc)
-    let replaced = false;
-    el.childNodes.forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE && node.nodeValue && node.nodeValue.trim()) {
-        node.nodeValue = value;
-        replaced = true;
-      }
-    });
-    if (!replaced) el.textContent = value;
+    if (value) el.textContent = value;
   });
 
   // Update the button label

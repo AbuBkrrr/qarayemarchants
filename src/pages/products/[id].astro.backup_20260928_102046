@@ -32,6 +32,23 @@ const orderUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(orde
 const mediaList = product.media_urls || product.image_urls || [];
 const primaryMedia = mediaList.length > 0 ? mediaList[0] : null;
 const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
+<!-- Share buttons — under the product image or title -->
+<ShareButtons
+  url={`https://qarayemarchants.com.ng/products/${product.id}`}
+  title={product.name}
+  description={product.description?.slice(0, 150)}
+  image={product.image_url}
+/>
+
+<!-- Escrow panel — in the sidebar or below the "Contact" button -->
+<EscrowPanel
+  productId={product.id}
+  productName={product.name}
+  amount={product.price}
+  currency="NGN"
+  sellerName={product.seller_name || 'Verified Merchant'}
+  sellerVerified={true}
+/>
 ---
 
 <Layout title={`${product.title} - Qaraye Marchants`} description={product.description}>
@@ -96,25 +113,6 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
         <p style="color: var(--ink-muted); margin-bottom: 8px; font-weight: 600;">{merchantName}</p>
         {seller?.bio && <p style="color: var(--ink-faint); font-size: 0.9rem; margin-bottom: 32px;">{seller.bio}</p>}
         {!seller?.bio && <p style="color: var(--ink-faint); font-size: 0.9rem; margin-bottom: 32px;">{sellerState}, Nigeria</p>}
-
-          <ShareButtons
-            url={`https://qarayemarchants.com.ng/products/${product.id}`}
-            title={product.title}
-            description={product.description?.slice(0, 150)}
-            image={primaryMedia || "/og-default.png"}
-          />
-
-          <div style="margin-top: 24px;">
-            <EscrowPanel
-              productId={String(product.id)}
-              productName={product.title}
-              amount={Number(product.price)}
-              currency="NGN"
-              sellerName={merchantName}
-              sellerVerified={true}
-            />
-          </div>
-
 
         <div style="padding: 16px; background: var(--cyan-soft); border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 20px;">
           <p style="margin: 0; font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); line-height: 1.6;">

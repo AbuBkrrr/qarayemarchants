@@ -303,8 +303,8 @@ const year = new Date().getFullYear();
 <body>
   <!-- Disclaimer Banner -->
   <div class="disclaimer-banner" id="disclaimer-banner" style="display:none;">
-    <span data-i18n="disclaimerText">Disclaimer: All purchases must be completed through Qaraye Marchants Admin for your safety and protection.</span> <a href="/terms" data-i18n="disclaimerLink">Read More</a>
-    <button class="disclaimer-dismiss" id="disclaimer-dismiss" data-i18n="dismiss">Dismiss</button>
+    <span><strong>Disclaimer:</strong> All purchases must be completed through <strong>Qaraye Marchants Admin</strong> for your safety and protection. Any transaction conducted outside of Qaraye Marchants Admin is <strong>not the liability of Qaraye Marchants</strong>. <a href="/terms">Read More</a></span>
+    <button class="disclaimer-dismiss" id="disclaimer-dismiss">Dismiss</button>
   </div>
 
   <header class="global-nav">
@@ -353,11 +353,11 @@ const year = new Date().getFullYear();
         <div id="auth-buttons" style="display: flex; align-items: center; gap: 8px;">
           <a href="/login" class="btn btn-ghost">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            <span data-i18n="navSignIn">Sign In</span>
+            <span>Sign In</span>
           </a>
           <a href="/create" class="btn btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span data-i18n="navCreatePost">Create Post</span>
+            <span>Create Post</span>
           </a>
         </div>
 

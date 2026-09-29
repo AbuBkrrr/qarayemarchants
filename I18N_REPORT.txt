@@ -1,0 +1,286 @@
+﻿Qaraye Marchants — i18n Translation Report
+Generated: 09/29/2026 04:27:41
+======================================================================
+
+[src\pages\admin\moderation.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Access denied. This page is for administrators only.
+    - Admin Users
+    - Clear Flag
+    - EMAIL HIDDEN
+    - LINK HIDDEN
+    - Moderation Queue
+    - Not signed in.
+    - Nothing to review in this tab.
+    - PHONE HIDDEN
+    - Re-flag
+    - Review comments flagged for hidden contact information.
+    - Sign in
+    - View Listing
+
+[src\pages\admin\users.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Access denied.
+    - Admin Users
+    - All Users
+    - Cannot modify self
+    - Grant or revoke admin access. Admins can moderate comments and manage users.
+    - Make Admin
+    - Moderation Queue
+    - Not signed in.
+    - Revoke Admin
+    - Sign in
+
+[src\pages\dashboard\edit-listing\[id].astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Bag (50kg)
+    - Edit Listing
+    - Fertilizers & Inputs
+    - Fruits & Vegetables
+    - Grains & Cereals
+    - Kilogram (kg)
+    - Livestock & Poultry
+    - PRICE (N)
+    - Save Changes
+    - Seeds & Seedlings
+    - Tonne (ton)
+    - Tubers & Roots
+    - Update your product details. Changes appear immediately on the marketplace.
+
+[src\pages\dashboard\bulk-upload.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Bulk Upload Listings
+    - Click to upload or drag and drop
+    - Download the CSV template
+    - Import Another File
+    - Import complete
+    - Importing...
+    - Review before importing
+    - Upload your filled CSV
+    - View My Listings
+
+[src\pages\dashboard\create-listing.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Bag (50kg)
+    - Click to upload or drag and drop
+    - Create a New Product Listing
+    - Fertilizers & Inputs
+    - Fill in the details below to list your agricultural product on the marketplace.
+    - Fruits & Vegetables
+    - Grains & Cereals
+    - Kilogram (kg)
+    - Livestock & Poultry
+    - PRODUCT TITLE
+    - QUANTITY AVAILABLE
+    - Seeds & Seedlings
+    - Select a category
+    - Tonne (ton)
+    - Tubers & Roots
+    - Uploading media...
+
+[src\pages\dashboard\listings.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Create your first listing
+    - Loading listings...
+    - Manage your product listings, track views, and update details.
+    - Mark Sold
+    - My Listings
+    - Sign in
+    - TOTAL LISTINGS
+    - TOTAL VIEWS
+    - You must be signed in.
+
+[src\pages\dashboard\profile.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - CONFIRM NEW PASSWORD
+    - CURRENT PASSWORD
+    - Edit Profile
+    - JPG, PNG or WEBP - Max 2MB
+    - My Profile
+    - NEW PASSWORD
+    - No bio added yet.
+    - OWNER NAME
+    - Save Profile
+    - Update Password
+    - Upload Photo
+    - Your Business Name
+
+[src\pages\dashboard\saved.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Browse Marketplace
+    - Loading saved items...
+    - No saved items yet
+    - Products you have bookmarked for later.
+    - Saved Items
+    - Sign In
+    - Sign in to see your saved items.
+    - Tap the heart on any product to save it here.
+
+[src\pages\escrow\how-it-works.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Browse Products
+    - Can I use escrow for cash-on-delivery?
+    - Common Questions
+    - Cross-Border Transactions
+    - Currency risk
+    - Customs documentation and shipping insurance can be bundled in
+    - Dispute resolution is handled by a neutral third party
+    - Escrow Fee
+    - Escrow holds the funds in the seller's local currency equivalent
+    - Fake sellers
+    - How Escrow Works
+    - How long does the money stay in escrow?
+    - If the seller never ships, you get a full refund. The money never leaves escrow.
+    - Item Price (NGN)
+    - Non-delivery
+    - Payment rails support USD, GBP, EUR, and other major currencies
+    - Ready to buy safely?
+    - The 5-Step Process
+    - What about international buyers?
+    - What Escrow Protects You From
+    - What if the seller refuses to ship?
+    - Who holds the money during escrow?
+    - Wrong items
+
+[src\pages\news\[slug].astro]
+  Tagged strings: 0
+  (no obvious static text found)
+
+[src\pages\post\[id].astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Contact Qaraye Marchants to complete your purchases
+
+[src\pages\products\index.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - All Categories
+    - All States
+    - Clear Filters
+    - Create a Listing
+    - Most Viewed
+    - Newest First
+    - SORT BY
+
+[src\pages\products\[id].astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - EMAIL HIDDEN
+    - LINK HIDDEN
+    - Loading comments...
+    - No comments yet. Be the first to share your thoughts.
+    - No Media Available
+    - PHONE HIDDEN
+    - Post Comment
+    - Share your thoughts about this listing. For purchases, use the button above.
+    - Sign In
+    - Sign in to leave a public comment.
+    - Your message goes directly to Qaraye Marchants Admin for a safe transaction.
+
+[src\pages\about.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - About Qaraye Marchants
+    - Browse Marketplace
+    - Browse products or list yours today.
+    - For Merchants
+    - Get in Touch
+    - List a Product
+    - NIGERIA'S AGRICULTURAL MARKETPLACE
+    - Our Mission
+    - Ready to get started?
+    - Visit our contact page
+    - What We Offer
+    - Why Buyers Trust Us
+
+[src\pages\contact.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Contact Us
+    - Message us on WhatsApp
+    - Reach out to us
+
+[src\pages\create.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Back to feed
+    - Choose an image
+    - Create a post
+    - Full WebP
+    - Max 15 MB. Auto-compressed to under 150 KB WebP.
+    - Media (optional)
+    - No media
+    - Original size
+    - Share a short insight, listing, or question with the community.
+    - Working...
+
+[src\pages\forgot-password.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Code sent.
+    - Enter the email on your Qaraye Marchants account
+    - Reset Password
+    - Send Reset Code
+    - We send you a 6-digit code (no links to click)
+
+[src\pages\index.astro]
+  Tagged strings: 6
+  Sample untagged strings:
+    - No content yet. Check back soon.
+    - Qaraye Marchants.
+
+[src\pages\login.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Create Account
+    - EMAIL (Optional)
+    - Forgot password?
+    - Required. Used for account recovery and merchant verification.
+    - Sign In
+    - Sign Up
+
+[src\pages\privacy.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Google Ads Settings
+    - Privacy Policy
+    - Questions? Email
+
+[src\pages\reset-password.astro]
+  Tagged strings: 0
+  (no obvious static text found)
+
+[src\pages\terms.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - For your safety and protection,
+    - Terms & Disclaimer
+
+[src\pages\trending.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - Create a Listing
+    - No news published yet.
+    - No products to rank yet.
+    - What buyers and readers are engaging with right now.
+
+[src\pages\verify-otp.astro]
+  Tagged strings: 0
+  Sample untagged strings:
+    - CODE FROM EMAIL
+    - Code verified. Now set your new password.
+    - CONFIRM PASSWORD
+    - Enter Reset Code
+    - Enter the full code exactly as shown in the email
+    - NEW PASSWORD
+    - Save New Password
+    - Verify Code
