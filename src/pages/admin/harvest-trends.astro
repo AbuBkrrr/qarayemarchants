@@ -163,9 +163,13 @@ const rows = signals || [];
         const t = e.target as HTMLElement;
         if ((t as any).dataset.del) {
           if (!confirm('Delete this signal?')) return;
+          const { data: { session: s1 } } = await supabase.auth.getSession();
           await fetch('/api/price-signals/delete', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${s1?.access_token || ''}`,
+            },
             body: JSON.stringify({ id: (t as any).dataset.del }),
           });
           location.reload();
@@ -194,9 +198,13 @@ const rows = signals || [];
           alert('Please fill all fields');
           return;
         }
+        const { data: { session: s2 } } = await supabase.auth.getSession();
         const r = await fetch('/api/price-signals/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${s2?.access_token || ''}`,
+          },
           body: JSON.stringify(payload),
         });
         if (r.ok) location.reload();
