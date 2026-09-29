@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { ADMIN_WHATSAPP } from '../../config';
 import ShareButtons from '../../components/ShareButtons.astro';
 import EscrowPanel from '../../components/EscrowPanel.astro';
+import QuantityBuy from '../../components/QuantityBuy.astro';
 
 const { id } = Astro.params;
 
@@ -88,6 +89,13 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
           <span style="font-size: 0.9rem; font-weight: 400; color: var(--ink-muted); font-family: var(--body);">per {product.unit}</span>
         </p>
         <p style="color: var(--ink-muted); margin-bottom: 24px;">{sellerState} &bull; {product.quantity} units available</p>
+                <QuantityBuy
+                    productId={String(product.id)}
+                    title={product.title}
+                    price={Number(product.price)}
+                    unit={product.unit}
+                    image={primaryMedia}
+                />
 
         <h2 style="font-family: var(--display); font-size: 1.2rem; color: var(--ink); margin-bottom: 8px;">Description</h2>
         <p style="color: var(--ink-muted); line-height: 1.8; margin-bottom: 32px;">{product.description}</p>
