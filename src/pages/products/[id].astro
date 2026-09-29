@@ -94,7 +94,7 @@ const isVideo = primaryMedia?.match(/\.(mp4|webm|mov)$/i);
                     title={product.title}
                     price={Number(product.price)}
                     unit={product.unit}
-                    image={primaryMedia}
+                    image={primaryMedia}`n                    maxQty={Number(product.quantity) || 1}
                 />
 
         <h2 style="font-family: var(--display); font-size: 1.2rem; color: var(--ink); margin-bottom: 8px;">Description</h2>

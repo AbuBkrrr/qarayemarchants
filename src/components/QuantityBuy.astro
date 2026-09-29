@@ -5,18 +5,21 @@ interface Props {
   price: number;
   unit: string;
   image?: string | null;
+  maxQty?: number;
 }
-const { productId, title, price, unit, image = null } = Astro.props;
+const { productId, title, price, unit, image = null, maxQty = 999999 } = Astro.props;
 ---
 
-<div class="qty-buy" data-product-id={productId}
+<div class="qty-buy"
+     data-product-id={productId}
      data-title={title}
      data-price={price}
      data-unit={unit}
-     data-image={image || ''}>
+     data-image={image || ''}
+     data-max={maxQty}>
   <div class="qty-picker">
     <button type="button" class="qty-btn" data-qty-dec aria-label="Decrease">−</button>
-    <input type="number" class="qty-input" data-qty-input value="1" min="1" />
+    <input type="number" class="qty-input" data-qty-input value="1" min="1" max={maxQty} />
     <button type="button" class="qty-btn" data-qty-inc aria-label="Increase">+</button>
     <span class="qty-unit">× {unit}</span>
   </div>
@@ -27,6 +30,9 @@ const { productId, title, price, unit, image = null } = Astro.props;
     </svg>
     <span>Add to Cart</span>
   </button>
+  <div class="qty-warn" data-qty-warn style="display:none; width:100%; margin-top:8px; font-family: var(--mono); font-size: 11px; color: #f59e0b;">
+    ⚠ Only {maxQty} units available
+  </div>
 </div>
 
 <script>
@@ -37,26 +43,48 @@ const { productId, title, price, unit, image = null } = Astro.props;
     const dec = root.querySelector('[data-qty-dec]');
     const inc = root.querySelector('[data-qty-inc]');
     const add = root.querySelector('[data-add]');
+    const warn = root.querySelector('[data-qty-warn]') as HTMLElement;
     const data = (root as HTMLElement).dataset;
+    const max = Number(data.max) || 999999;
+
+    function clamp() {
+      let v = Number(input.value) || 1;
+      if (v < 1) v = 1;
+      if (v > max) {
+        v = max;
+        if (warn) {
+          warn.style.display = 'block';
+          setTimeout(() => { warn.style.display = 'none'; }, 2500);
+        }
+      }
+      input.value = String(v);
+      // Disable + button at max
+      if (inc) (inc as HTMLButtonElement).disabled = v >= max;
+      return v;
+    }
+
+    clamp();
 
     dec?.addEventListener('click', () => {
       input.value = String(Math.max(1, Number(input.value) - 1));
+      clamp();
     });
     inc?.addEventListener('click', () => {
       input.value = String(Number(input.value) + 1);
+      clamp();
     });
-    input.addEventListener('input', () => {
-      input.value = String(Math.max(1, Number(input.value) || 1));
-    });
+    input.addEventListener('input', clamp);
+    input.addEventListener('blur', clamp);
 
     add?.addEventListener('click', () => {
+      const qty = clamp();
       addToCart({
         id: data.productId!,
         title: data.title!,
         price: Number(data.price),
         unit: data.unit!,
         image: data.image || null,
-      }, Number(input.value));
+      }, qty, max);
       const btn = add as HTMLElement;
       const original = btn.innerHTML;
       btn.innerHTML = '✓ Added to Cart';
@@ -92,9 +120,10 @@ const { productId, title, price, unit, image = null } = Astro.props;
     font-size: 18px; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
-  .qty-btn:hover { background: var(--cyan-soft); }
+  .qty-btn:hover:not(:disabled) { background: var(--cyan-soft); }
+  .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .qty-input {
-    width: 48px; background: transparent; border: none;
+    width: 60px; background: transparent; border: none;
     color: var(--ink); font-family: var(--mono); font-size: 14px;
     font-weight: 700; text-align: center; outline: none;
     -moz-appearance: textfield;
