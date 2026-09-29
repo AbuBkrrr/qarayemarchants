@@ -2,19 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
 
-// Simple auth check — will redirect if not admin
-const { data: { user } } = await supabase.auth.getUser();
-let isAdmin = false;
-if (user) {
-  const { data: prof } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  isAdmin = !!prof?.is_admin;
-}
-
-// Fetch all signals
+// Fetch all signals SERVER-SIDE (public data, no auth needed)
 const { data: signals } = await supabase
   .from('qm_price_signals')
   .select('*')
@@ -26,147 +14,197 @@ const rows = signals || [];
 
 <Layout title="Harvest Trends Admin - Qaraye Marchants">
   <div class="container" style="padding: 40px 24px;">
-    {!isAdmin ? (
-      <div style="text-align:center; padding: 80px 20px;">
-        <h1 style="font-family: var(--display);">Access denied</h1>
-        <p style="color: var(--ink-muted);">This page is for administrators only.</p>
-        <a href="/login" class="btn btn-primary" style="margin-top: 16px;">Sign in</a>
-      </div>
-    ) : (
-      <>
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
-          <div>
-            <h1 style="font-family: var(--display); font-size: 1.8rem; margin: 0 0 6px 0;">Harvest Price Signals</h1>
-            <p style="color: var(--ink-muted); margin: 0;">Manage the price data that powers the "Harvest Season Price Trends" chart on the homepage.</p>
-          </div>
-          <button id="add-btn" class="btn btn-primary">+ Add Signal</button>
-        </div>
 
-        <!-- Add form (hidden by default) -->
-        <div id="add-form" style="display:none; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px; margin-bottom: 24px;">
-          <h3 style="font-family: var(--display); margin: 0 0 14px 0;">New Price Signal</h3>
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
-            <label>Category<br><select id="f-category" style="width:100%; padding:8px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
+    <!-- Loading state (visible until client check finishes) -->
+    <div id="loading" style="text-align:center; padding: 80px 20px;">
+      <p style="color: var(--ink-muted); font-family: var(--mono); font-size: 13px;">Checking access…</p>
+    </div>
+
+    <!-- Access denied state -->
+    <div id="denied" style="display:none; text-align:center; padding: 80px 20px;">
+      <h1 style="font-family: var(--display); font-size: 2rem;">Access denied</h1>
+      <p style="color: var(--ink-muted);">This page is for administrators only.</p>
+      <a href="/login" class="btn btn-primary" style="margin-top: 16px;">Sign in</a>
+    </div>
+
+    <!-- Admin content -->
+    <div id="admin-content" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+        <div>
+          <h1 style="font-family: var(--display); font-size: 1.8rem; margin: 0 0 6px 0;">Harvest Price Signals</h1>
+          <p style="color: var(--ink-muted); margin: 0;">Manage the price data that powers the "Harvest Season Price Trends" chart.</p>
+        </div>
+        <button id="add-btn" class="btn btn-primary">+ Add Signal</button>
+      </div>
+
+      <div id="add-form" style="display:none; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px; margin-bottom: 24px;">
+        <h3 style="font-family: var(--display); margin: 0 0 14px 0;">New Price Signal</h3>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">CATEGORY<br>
+            <select id="f-category" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
               <option value="grains">Grains & Cereals</option>
               <option value="tubers">Tubers & Roots</option>
               <option value="livestock">Livestock & Poultry</option>
               <option value="fruits">Fruits & Vegetables</option>
               <option value="seeds">Seeds & Seedlings</option>
               <option value="fertilizers">Fertilizers & Inputs</option>
-            </select></label>
-            <label>Item name<br><input id="f-item" type="text" placeholder="e.g. Rice (local)" style="width:100%; padding:8px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);"></label>
-            <label>Price (₦)<br><input id="f-price" type="number" placeholder="1200" style="width:100%; padding:8px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);"></label>
-            <label>Unit<br><select id="f-unit" style="width:100%; padding:8px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
+            </select>
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">ITEM NAME<br>
+            <input id="f-item" type="text" placeholder="e.g. Rice (local)" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">PRICE (₦)<br>
+            <input id="f-price" type="number" placeholder="1200" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">UNIT<br>
+            <select id="f-unit" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
               <option value="kg">kg</option>
               <option value="bag">bag</option>
               <option value="ton">ton</option>
               <option value="piece">piece</option>
               <option value="liter">liter</option>
-            </select></label>
-            <label>Date<br><input id="f-date" type="date" style="width:100%; padding:8px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);"></label>
-            <label>Source<br><select id="f-source" style="width:100%; padding:8px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
+            </select>
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">DATE<br>
+            <input id="f-date" type="date" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">SOURCE<br>
+            <select id="f-source" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
               <option value="admin">Manual (admin)</option>
               <option value="news">News</option>
               <option value="listing">Listing</option>
-            </select></label>
-          </div>
-          <div style="margin-top: 14px; display: flex; gap: 10px;">
-            <button id="save-btn" class="btn btn-primary">Save Signal</button>
-            <button id="cancel-btn" class="btn btn-ghost">Cancel</button>
-          </div>
+            </select>
+          </label>
         </div>
-
-        <!-- Signals table -->
-        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px;">
-            <thead>
-              <tr style="background: var(--bg-850); text-align: left;">
-                <th style="padding: 10px 14px;">Date</th>
-                <th style="padding: 10px 14px;">Item</th>
-                <th style="padding: 10px 14px;">Category</th>
-                <th style="padding: 10px 14px; text-align: right;">Price</th>
-                <th style="padding: 10px 14px;">Source</th>
-                <th style="padding: 10px 14px;">Status</th>
-                <th style="padding: 10px 14px;"></th>
-              </tr>
-            </thead>
-            <tbody id="signals-body"></tbody>
-          </table>
-          {rows.length === 0 && <p style="text-align:center; padding: 40px; color: var(--ink-muted);">No signals yet. Click "Add Signal" to create the first one.</p>}
+        <div style="margin-top: 14px; display: flex; gap: 10px;">
+          <button id="save-btn" class="btn btn-primary">Save Signal</button>
+          <button id="cancel-btn" class="btn btn-ghost">Cancel</button>
         </div>
+      </div>
 
-        <script is:inline define:vars={{ rows }}>
-          const tbody = document.getElementById('signals-body');
-          function render() {
-            if (!tbody) return;
-            tbody.innerHTML = rows.map(r => `
-              <tr data-id="${r.id}" style="border-top: 1px solid var(--line-soft);">
-                <td style="padding: 10px 14px; color: var(--ink-muted);">${r.recorded_at}</td>
-                <td style="padding: 10px 14px; color: var(--ink);">${r.item_name}</td>
-                <td style="padding: 10px 14px; color: var(--ink-muted);">${r.category}</td>
-                <td style="padding: 10px 14px; text-align: right; color: var(--cyan); font-weight: 700;">₦${Number(r.price).toLocaleString()}/${r.unit}</td>
-                <td style="padding: 10px 14px;">
-                  <span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--bg-850); color: var(--ink-muted);">${r.source}</span>
-                </td>
-                <td style="padding: 10px 14px;">
-                  <span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${r.status === 'approved' ? 'rgba(16,217,130,0.15)' : 'rgba(245,158,11,0.15)'}; color: ${r.status === 'approved' ? '#10d982' : '#f59e0b'};">${r.status}</span>
-                </td>
-                <td style="padding: 10px 14px;">
-                  <button data-del="${r.id}" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button>
-                </td>
-              </tr>
-            `).join('');
-          }
-          render();
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px;">
+          <thead>
+            <tr style="background: var(--bg-850); text-align: left;">
+              <th style="padding: 10px 14px;">Date</th>
+              <th style="padding: 10px 14px;">Item</th>
+              <th style="padding: 10px 14px;">Category</th>
+              <th style="padding: 10px 14px; text-align: right;">Price</th>
+              <th style="padding: 10px 14px;">Source</th>
+              <th style="padding: 10px 14px;">Status</th>
+              <th style="padding: 10px 14px;"></th>
+            </tr>
+          </thead>
+          <tbody id="signals-body"></tbody>
+        </table>
+        <p id="empty-msg" style="text-align:center; padding: 40px; color: var(--ink-muted); display:none;">No signals yet. Click "Add Signal" to create the first one.</p>
+      </div>
+    </div>
 
-          // Delete
-          document.addEventListener('click', async (e) => {
-            const t = e.target;
-            if (t.dataset.del) {
-              if (!confirm('Delete this signal?')) return;
-              await fetch('/api/price-signals/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: t.dataset.del }),
-              });
-              location.reload();
-            }
-          });
-
-          // Toggle form
-          document.getElementById('add-btn')?.addEventListener('click', () => {
-            const f = document.getElementById('add-form');
-            f.style.display = f.style.display === 'none' ? 'block' : 'none';
-            document.getElementById('f-date').valueAsDate = new Date();
-          });
-          document.getElementById('cancel-btn')?.addEventListener('click', () => {
-            document.getElementById('add-form').style.display = 'none';
-          });
-
-          // Save
-          document.getElementById('save-btn')?.addEventListener('click', async () => {
-            const payload = {
-              category: document.getElementById('f-category').value,
-              item_name: document.getElementById('f-item').value.trim(),
-              price: Number(document.getElementById('f-price').value),
-              unit: document.getElementById('f-unit').value,
-              recorded_at: document.getElementById('f-date').value,
-              source: document.getElementById('f-source').value,
-            };
-            if (!payload.item_name || !payload.price || !payload.recorded_at) {
-              alert('Please fill all fields');
-              return;
-            }
-            const r = await fetch('/api/price-signals/create', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            });
-            if (r.ok) location.reload();
-            else alert('Failed: ' + await r.text());
-          });
-        </script>
-      </>
-    )}
   </div>
+
+  <script is:inline define:vars={{ rows }}>
+    import { supabase } from '../../lib/supabase';
+
+    // --- CLIENT-SIDE ADMIN CHECK ---
+    (async function checkAdmin() {
+      const loadingEl = document.getElementById('loading');
+      const deniedEl = document.getElementById('denied');
+      const contentEl = document.getElementById('admin-content');
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          loadingEl.style.display = 'none';
+          deniedEl.style.display = 'block';
+          return;
+        }
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+
+        if (!prof?.is_admin) {
+          loadingEl.style.display = 'none';
+          deniedEl.style.display = 'block';
+          return;
+        }
+
+        // ✅ Authorized — reveal content
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+        initAdminUI();
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        deniedEl.style.display = 'block';
+        console.error('Admin check error:', err);
+      }
+    })();
+
+    function initAdminUI() {
+      const tbody = document.getElementById('signals-body');
+      const emptyMsg = document.getElementById('empty-msg');
+
+      if (rows.length === 0) {
+        emptyMsg.style.display = 'block';
+      }
+
+      tbody.innerHTML = rows.map(r => `
+        <tr data-id="${r.id}" style="border-top: 1px solid var(--line-soft);">
+          <td style="padding: 10px 14px; color: var(--ink-muted);">${r.recorded_at}</td>
+          <td style="padding: 10px 14px; color: var(--ink);">${r.item_name}</td>
+          <td style="padding: 10px 14px; color: var(--ink-muted);">${r.category}</td>
+          <td style="padding: 10px 14px; text-align: right; color: var(--cyan); font-weight: 700;">₦${Number(r.price).toLocaleString()}/${r.unit}</td>
+          <td style="padding: 10px 14px;"><span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--bg-850); color: var(--ink-muted);">${r.source}</span></td>
+          <td style="padding: 10px 14px;"><span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${r.status === 'approved' ? 'rgba(16,217,130,0.15)' : 'rgba(245,158,11,0.15)'}; color: ${r.status === 'approved' ? '#10d982' : '#f59e0b'};">${r.status}</span></td>
+          <td style="padding: 10px 14px;"><button data-del="${r.id}" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button></td>
+        </tr>
+      `).join('');
+
+      document.addEventListener('click', async (e) => {
+        const t = e.target;
+        if (t.dataset.del) {
+          if (!confirm('Delete this signal?')) return;
+          await fetch('/api/price-signals/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: t.dataset.del }),
+          });
+          location.reload();
+        }
+      });
+
+      document.getElementById('add-btn')?.addEventListener('click', () => {
+        const f = document.getElementById('add-form');
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        document.getElementById('f-date').valueAsDate = new Date();
+      });
+      document.getElementById('cancel-btn')?.addEventListener('click', () => {
+        document.getElementById('add-form').style.display = 'none';
+      });
+
+      document.getElementById('save-btn')?.addEventListener('click', async () => {
+        const payload = {
+          category: document.getElementById('f-category').value,
+          item_name: document.getElementById('f-item').value.trim(),
+          price: Number(document.getElementById('f-price').value),
+          unit: document.getElementById('f-unit').value,
+          recorded_at: document.getElementById('f-date').value,
+          source: document.getElementById('f-source').value,
+        };
+        if (!payload.item_name || !payload.price || !payload.recorded_at) {
+          alert('Please fill all fields');
+          return;
+        }
+        const r = await fetch('/api/price-signals/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (r.ok) location.reload();
+        else alert('Failed: ' + await r.text());
+      });
+    }
+  </script>
 </Layout>
