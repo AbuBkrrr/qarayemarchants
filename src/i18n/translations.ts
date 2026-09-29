@@ -14,6 +14,7 @@ export const languages: { code: LanguageCode; name: string; nativeName: string }
 export const translations: Record<LanguageCode, Record<string, string>> = {
   en: {
     appName: 'Qaraye Marchants',
+    harvestManage: 'Manage price signals →',
     harvestTitle: 'Harvest Season Price Trends',
     harvestSubtitle: 'Average listing prices by category over the last 12 months.',
     harvestNow: 'In season now:',
@@ -103,6 +104,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   ha: {
     appName: 'Qaraye Marchants',
+    harvestManage: 'Manage price signals →',
     harvestTitle: 'Harvest Season Price Trends',
     harvestSubtitle: 'Average listing prices by category over the last 12 months.',
     harvestNow: 'In season now:',
@@ -192,6 +194,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   yo: {
     appName: 'Qaraye Marchants',
+    harvestManage: 'Manage price signals →',
     harvestTitle: 'Harvest Season Price Trends',
     harvestSubtitle: 'Average listing prices by category over the last 12 months.',
     harvestNow: 'In season now:',
@@ -281,6 +284,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   ig: {
     appName: 'Qaraye Marchants',
+    harvestManage: 'Manage price signals →',
     harvestTitle: 'Harvest Season Price Trends',
     harvestSubtitle: 'Average listing prices by category over the last 12 months.',
     harvestNow: 'In season now:',
