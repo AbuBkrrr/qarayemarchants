@@ -33,8 +33,17 @@ const rows = signals || [];
         <button id="add-btn" class="btn btn-primary">+ Add Signal</button>
       </div>
 
+      <!-- Filter tabs -->
+      <div id="filter-tabs" style="display:flex; gap:6px; margin-bottom:16px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full); width: fit-content;">
+        <button class="filter-tab active" data-status="all">All</button>
+        <button class="filter-tab" data-status="approved">Approved</button>
+        <button class="filter-tab" data-status="suspended">Suspended</button>
+      </div>
+
+      <!-- Add / Edit form -->
       <div id="add-form" style="display:none; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px; margin-bottom: 24px;">
-        <h3 style="font-family: var(--display); margin: 0 0 14px 0;">New Price Signal</h3>
+        <h3 id="form-title" style="font-family: var(--display); margin: 0 0 14px 0;">New Price Signal</h3>
+        <input type="hidden" id="f-edit-id" value="" />
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
           <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">CATEGORY<br>
             <select id="f-category" style="width:100%; padding:8px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);">
@@ -88,7 +97,7 @@ const rows = signals || [];
               <th style="padding: 10px 14px; text-align: right;">Price</th>
               <th style="padding: 10px 14px;">Source</th>
               <th style="padding: 10px 14px;">Status</th>
-              <th style="padding: 10px 14px;"></th>
+              <th style="padding: 10px 14px; text-align: right;">Actions</th>
             </tr>
           </thead>
           <tbody id="signals-body"></tbody>
@@ -99,94 +108,186 @@ const rows = signals || [];
 
   </div>
 
-  <!-- Data island: pass server-fetched rows to client JS -->
   <script type="application/json" id="rows-data" set:html={JSON.stringify(rows)} />
 
   <script>
     import { supabase } from '../../lib/supabase';
 
-    const rows = JSON.parse(document.getElementById('rows-data')?.textContent || '[]');
+    let rows: any[] = JSON.parse(document.getElementById('rows-data')?.textContent || '[]');
+    let currentFilter: 'all' | 'approved' | 'suspended' = 'all';
 
     const loadingEl = document.getElementById('loading')!;
     const deniedEl = document.getElementById('denied')!;
     const contentEl = document.getElementById('admin-content')!;
 
+    async function getToken(): Promise<string> {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || '';
+    }
+
     (async function checkAdmin() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          loadingEl.style.display = 'none';
-          deniedEl.style.display = 'block';
-          return;
-        }
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user.id)
-          .single();
-
-        if (!prof?.is_admin) {
-          loadingEl.style.display = 'none';
-          deniedEl.style.display = 'block';
-          return;
-        }
-
+        if (!user) { loadingEl.style.display = 'none'; deniedEl.style.display = 'block'; return; }
+        const { data: prof } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+        if (!prof?.is_admin) { loadingEl.style.display = 'none'; deniedEl.style.display = 'block'; return; }
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
         initAdminUI();
       } catch (err) {
-        console.error('Admin check error:', err);
+        console.error(err);
         loadingEl.style.display = 'none';
         deniedEl.style.display = 'block';
       }
     })();
 
-    function initAdminUI() {
+    function renderTable() {
       const tbody = document.getElementById('signals-body')!;
       const emptyMsg = document.getElementById('empty-msg')!;
 
-      if (rows.length === 0) emptyMsg.style.display = 'block';
+      const filtered = currentFilter === 'all'
+        ? rows
+        : rows.filter(r => r.status === currentFilter);
 
-      tbody.innerHTML = rows.map((r: any) => `
-        <tr data-id="${r.id}" style="border-top: 1px solid var(--line-soft);">
+      if (filtered.length === 0) {
+        emptyMsg.style.display = 'block';
+        emptyMsg.textContent = currentFilter === 'all'
+          ? 'No signals yet. Click "Add Signal" to create the first one.'
+          : `No ${currentFilter} signals.`;
+      } else {
+        emptyMsg.style.display = 'none';
+      }
+
+      tbody.innerHTML = filtered.map((r: any) => {
+        const isSuspended = r.status === 'suspended';
+        const statusColor = isSuspended ? '#f59e0b' : '#10d982';
+        const statusBg = isSuspended ? 'rgba(245,158,11,0.15)' : 'rgba(16,217,130,0.15)';
+        return `
+        <tr data-id="${r.id}" style="border-top: 1px solid var(--line-soft); ${isSuspended ? 'opacity:0.6;' : ''}">
           <td style="padding: 10px 14px; color: var(--ink-muted);">${r.recorded_at}</td>
           <td style="padding: 10px 14px; color: var(--ink);">${r.item_name}</td>
           <td style="padding: 10px 14px; color: var(--ink-muted);">${r.category}</td>
           <td style="padding: 10px 14px; text-align: right; color: var(--cyan); font-weight: 700;">₦${Number(r.price).toLocaleString()}/${r.unit}</td>
           <td style="padding: 10px 14px;"><span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--bg-850); color: var(--ink-muted);">${r.source}</span></td>
-          <td style="padding: 10px 14px;"><span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${r.status === 'approved' ? 'rgba(16,217,130,0.15)' : 'rgba(245,158,11,0.15)'}; color: ${r.status === 'approved' ? '#10d982' : '#f59e0b'};">${r.status}</span></td>
-          <td style="padding: 10px 14px;"><button data-del="${r.id}" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button></td>
+          <td style="padding: 10px 14px;"><span style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${statusBg}; color: ${statusColor};">${r.status}</span></td>
+          <td style="padding: 10px 14px; text-align: right; white-space: nowrap;">
+            <button data-toggle="${r.id}" title="${isSuspended ? 'Re-approve' : 'Suspend'}" style="background: transparent; border: 1px solid ${isSuspended ? 'rgba(16,217,130,0.3)' : 'rgba(245,158,11,0.3)'}; color: ${isSuspended ? '#10d982' : '#f59e0b'}; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 6px;">
+              ${isSuspended ? 'Approve' : 'Suspend'}
+            </button>
+            <button data-edit="${r.id}" title="Edit" style="background: transparent; border: 1px solid var(--line); color: var(--ink-muted); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 6px;">Edit</button>
+            <button data-del="${r.id}" title="Delete" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button>
+          </td>
         </tr>
-      `).join('');
+        `;
+      }).join('');
+    }
 
-      document.addEventListener('click', async (e) => {
-        const t = e.target as HTMLElement;
-        if ((t as any).dataset.del) {
-          if (!confirm('Delete this signal?')) return;
-          const { data: { session: s1 } } = await supabase.auth.getSession();
-          await fetch('/api/price-signals/delete', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${s1?.access_token || ''}`,
-            },
-            body: JSON.stringify({ id: (t as any).dataset.del }),
-          });
-          location.reload();
-        }
+    function resetForm() {
+      (document.getElementById('f-edit-id') as HTMLInputElement).value = '';
+      (document.getElementById('f-item') as HTMLInputElement).value = '';
+      (document.getElementById('f-price') as HTMLInputElement).value = '';
+      (document.getElementById('f-category') as HTMLSelectElement).value = 'grains';
+      (document.getElementById('f-unit') as HTMLSelectElement).value = 'kg';
+      (document.getElementById('f-source') as HTMLSelectElement).value = 'admin';
+      (document.getElementById('f-date') as HTMLInputElement).valueAsDate = new Date();
+      document.getElementById('form-title')!.textContent = 'New Price Signal';
+      (document.getElementById('save-btn') as HTMLButtonElement).textContent = 'Save Signal';
+    }
+
+    function initAdminUI() {
+      renderTable();
+
+      // Filter tabs
+      document.querySelectorAll('.filter-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentFilter = (tab as HTMLElement).dataset.status as any;
+          renderTable();
+        });
       });
 
+      // Form toggle
       document.getElementById('add-btn')?.addEventListener('click', () => {
         const f = document.getElementById('add-form')!;
-        f.style.display = f.style.display === 'none' ? 'block' : 'none';
-        (document.getElementById('f-date') as HTMLInputElement).valueAsDate = new Date();
+        if (f.style.display === 'block') {
+          f.style.display = 'none';
+        } else {
+          resetForm();
+          f.style.display = 'block';
+        }
       });
       document.getElementById('cancel-btn')?.addEventListener('click', () => {
         document.getElementById('add-form')!.style.display = 'none';
+        resetForm();
       });
 
+      // Row actions (delegated)
+      document.addEventListener('click', async (e) => {
+        const t = e.target as HTMLElement;
+
+        // Edit
+        if ((t as any).dataset.edit) {
+          const id = (t as any).dataset.edit;
+          const r = rows.find(x => String(x.id) === String(id));
+          if (!r) return;
+          (document.getElementById('f-edit-id') as HTMLInputElement).value = r.id;
+          (document.getElementById('f-item') as HTMLInputElement).value = r.item_name;
+          (document.getElementById('f-price') as HTMLInputElement).value = r.price;
+          (document.getElementById('f-category') as HTMLSelectElement).value = r.category;
+          (document.getElementById('f-unit') as HTMLSelectElement).value = r.unit;
+          (document.getElementById('f-source') as HTMLSelectElement).value = r.source;
+          (document.getElementById('f-date') as HTMLInputElement).value = r.recorded_at;
+          document.getElementById('form-title')!.textContent = `Edit Signal #${r.id}`;
+          (document.getElementById('save-btn') as HTMLButtonElement).textContent = 'Update Signal';
+          const f = document.getElementById('add-form')!;
+          f.style.display = 'block';
+          f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+
+        // Toggle status (Suspend / Approve)
+        if ((t as any).dataset.toggle) {
+          const id = (t as any).dataset.toggle;
+          const r = rows.find(x => String(x.id) === String(id));
+          if (!r) return;
+          const next = r.status === 'suspended' ? 'approved' : 'suspended';
+          const ok = confirm(`Are you sure you want to ${next === 'suspended' ? 'suspend' : 're-approve'} this signal?`);
+          if (!ok) return;
+          const token = await getToken();
+          const res = await fetch('/api/price-signals/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ id, status: next }),
+          });
+          if (res.ok) {
+            r.status = next;
+            renderTable();
+          } else {
+            alert('Failed: ' + await res.text());
+          }
+          return;
+        }
+
+        // Delete
+        if ((t as any).dataset.del) {
+          if (!confirm('Delete this signal permanently?')) return;
+          const token = await getToken();
+          const res = await fetch('/api/price-signals/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ id: (t as any).dataset.del }),
+          });
+          if (res.ok) location.reload();
+          else alert('Failed: ' + await res.text());
+          return;
+        }
+      });
+
+      // Save / Update
       document.getElementById('save-btn')?.addEventListener('click', async () => {
-        const payload = {
+        const editId = (document.getElementById('f-edit-id') as HTMLInputElement).value.trim();
+        const payload: any = {
           category: (document.getElementById('f-category') as HTMLSelectElement).value,
           item_name: (document.getElementById('f-item') as HTMLInputElement).value.trim(),
           price: Number((document.getElementById('f-price') as HTMLInputElement).value),
@@ -198,13 +299,14 @@ const rows = signals || [];
           alert('Please fill all fields');
           return;
         }
-        const { data: { session: s2 } } = await supabase.auth.getSession();
-        const r = await fetch('/api/price-signals/create', {
+
+        const token = await getToken();
+        const endpoint = editId ? '/api/price-signals/update' : '/api/price-signals/create';
+        if (editId) payload.id = editId;
+
+        const r = await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${s2?.access_token || ''}`,
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
         if (r.ok) location.reload();
@@ -212,4 +314,26 @@ const rows = signals || [];
       });
     }
   </script>
+
+  <style>
+    .filter-tab {
+      font-family: var(--body);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: var(--r-full);
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--ink-muted);
+      transition: 0.15s;
+    }
+    .filter-tab.active {
+      background: var(--cyan);
+      color: var(--bg-950);
+    }
+    .filter-tab:not(.active):hover {
+      color: var(--ink);
+    }
+  </style>
 </Layout>
