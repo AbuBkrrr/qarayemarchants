@@ -1,0 +1,236 @@
+---
+import { supabase } from '../lib/supabase';
+
+// --- Harvest calendar for Nigeria (static reference) ---
+const HARVEST_CALENDAR: Record<string, number[]> = {
+  grains: [10, 11, 0, 7, 8],       // Oct-Feb, Aug-Sep
+  tubers: [10, 11, 0, 1],          // Nov-Feb
+  livestock: [11, 0],              // Dec-Jan (festive peak)
+  fruits: [3, 4, 5, 10, 11],       // Apr-Jun, Nov-Dec
+  seeds: [1, 2, 3, 4],             // Feb-May
+  fertilizers: [2, 3, 4, 5],       // Mar-Jun
+};
+
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// --- Query last 12 months of active products ---
+const twelveMonthsAgo = new Date();
+twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+twelveMonthsAgo.setDate(1);
+twelveMonthsAgo.setHours(0, 0, 0, 0);
+
+const { data: products } = await supabase
+  .from('products')
+  .select('category, price, unit, created_at')
+  .eq('status', 'active')
+  .gte('created_at', twelveMonthsAgo.toISOString());
+
+// --- Aggregate: for each category, average price per month ---
+const byCatMonth: Record<string, Record<number, { sum: number; count: number }>> = {};
+const catTotals: Record<string, number> = {};
+
+(products || []).forEach((p) => {
+  if (!p.category || !p.price) return;
+  const monthKey = new Date(p.created_at).getMonth(); // 0-11
+  const cat = p.category;
+
+  if (!byCatMonth[cat]) byCatMonth[cat] = {};
+  if (!byCatMonth[cat][monthKey]) byCatMonth[cat][monthKey] = { sum: 0, count: 0 };
+
+  byCatMonth[cat][monthKey].sum += Number(p.price);
+  byCatMonth[cat][monthKey].count += 1;
+  catTotals[cat] = (catTotals[cat] || 0) + 1;
+});
+
+// Pick top 4 categories by listing volume
+const topCategories = Object.entries(catTotals)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 4)
+  .map(([cat]) => cat);
+
+// Build datasets: one per category, one value per month (0 = no data)
+const datasets = topCategories.map((cat) => {
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const bucket = byCatMonth[cat]?.[i];
+    return bucket ? Math.round(bucket.sum / bucket.count) : null;
+  });
+  return { category: cat, months };
+});
+
+// Determine "current harvest" status: is current month in any category's calendar?
+const currentMonth = new Date().getMonth();
+const activeHarvests = topCategories.filter(
+  (cat) => HARVEST_CALENDAR[cat]?.includes(currentMonth)
+);
+
+const hasData = datasets.some((d) => d.months.some((v) => v !== null));
+
+const CATEGORY_LABELS: Record<string, string> = {
+  grains: 'Grains & Cereals',
+  tubers: 'Tubers & Roots',
+  livestock: 'Livestock & Poultry',
+  fruits: 'Fruits & Vegetables',
+  seeds: 'Seeds & Seedlings',
+  fertilizers: 'Fertilizers & Inputs',
+};
+---
+
+<section class="harvest-section" id="harvest-chart-section">
+  <div class="harvest-header">
+    <div>
+      <h2 data-i18n="harvestTitle">Harvest Season Price Trends</h2>
+      <p data-i18n="harvestSubtitle">Average listing prices by category over the last 12 months.</p>
+    </div>
+    {activeHarvests.length > 0 && (
+      <div class="harvest-badge" title="Currently in harvest season">
+        🌾 <span data-i18n="harvestNow">In season now:</span>
+        {activeHarvests.map((c) => CATEGORY_LABELS[c] || c).join(', ')}
+      </div>
+    )}
+  </div>
+
+  {!hasData ? (
+    <div class="harvest-empty">
+      <p data-i18n="harvestEmpty">Not enough listings yet. Price trends will appear here as more products are added.</p>
+    </div>
+  ) : (
+    <div class="harvest-chart-wrap">
+      <canvas id="harvestChart" height="120"></canvas>
+    </div>
+  )}
+</section>
+
+<script is:inline define:vars={{ datasets, MONTH_LABELS, HARVEST_CALENDAR, currentMonth }}>
+  // Wait for DOM + Chart.js
+  function boot() {
+    const canvas = document.getElementById('harvestChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const ink = cssVar('--ink-muted') || '#8b95b8';
+    const grid = 'rgba(255,255,255,0.05)';
+    const palette = ['#00e5ff', '#8b5cf6', '#10d982', '#f59e0b'];
+
+    const chartDatasets = datasets.map((d, i) => ({
+      label: d.category,
+      data: d.months,
+      borderColor: palette[i % palette.length],
+      backgroundColor: palette[i % palette.length] + '22',
+      tension: 0.35,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      spanGaps: true,
+      fill: false,
+    }));
+
+    new Chart(canvas, {
+      type: 'line',
+      data: { labels: MONTH_LABELS, datasets: chartDatasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { labels: { color: ink, font: { family: 'JetBrains Mono', size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: (c) => ` ${c.dataset.label}: ₦${Number(c.raw).toLocaleString()}`,
+            },
+          },
+        },
+        scales: {
+          x: { ticks: { color: ink, font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: grid } },
+          y: {
+            ticks: {
+              color: ink,
+              font: { family: 'JetBrains Mono', size: 10 },
+              callback: (v) => '₦' + Number(v).toLocaleString(),
+            },
+            grid: { color: grid },
+          },
+        },
+      },
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+</script>
+
+<!-- Load Chart.js once (idempotent) -->
+<script is:inline>
+  if (!window.__qmChartJsLoaded) {
+    window.__qmChartJsLoaded = true;
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js';
+    s.onload = () => window.dispatchEvent(new Event('chartjs-ready'));
+    document.head.appendChild(s);
+  }
+</script>
+
+<style>
+  .harvest-section {
+    max-width: 1280px;
+    margin: 40px auto 32px;
+    padding: 24px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-lg);
+  }
+  .harvest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .harvest-header h2 {
+    font-family: var(--display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--ink);
+  }
+  .harvest-header p {
+    font-family: var(--body);
+    font-size: 0.88rem;
+    color: var(--ink-muted);
+    margin: 0;
+  }
+  .harvest-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 217, 130, 0.12);
+    color: var(--green);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: var(--r-full);
+    border: 1px solid rgba(16, 217, 130, 0.3);
+    white-space: nowrap;
+  }
+  .harvest-chart-wrap {
+    position: relative;
+    width: 100%;
+    max-height: 320px;
+  }
+  .harvest-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-muted);
+    font-family: var(--body);
+    font-size: 0.9rem;
+    background: var(--bg-850);
+    border: 1px dashed var(--line);
+    border-radius: var(--r-md);
+  }
+  @media (max-width: 640px) {
+    .harvest-section { padding: 16px; margin: 24px 16px; }
+    .harvest-header h2 { font-size: 1.1rem; }
+  }
+</style>

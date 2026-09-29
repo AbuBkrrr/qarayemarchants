@@ -14,6 +14,10 @@ export const languages: { code: LanguageCode; name: string; nativeName: string }
 export const translations: Record<LanguageCode, Record<string, string>> = {
   en: {
     appName: 'Qaraye Marchants',
+    harvestTitle: 'Harvest Season Price Trends',
+    harvestSubtitle: 'Average listing prices by category over the last 12 months.',
+    harvestNow: 'In season now:',
+    harvestEmpty: 'Not enough listings yet. Price trends will appear here as more products are added.',
     marqueeTitle: 'Fresh from the Farms',
     marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
@@ -99,6 +103,10 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   ha: {
     appName: 'Qaraye Marchants',
+    harvestTitle: 'Harvest Season Price Trends',
+    harvestSubtitle: 'Average listing prices by category over the last 12 months.',
+    harvestNow: 'In season now:',
+    harvestEmpty: 'Not enough listings yet. Price trends will appear here as more products are added.',
     marqueeTitle: 'Fresh from the Farms',
     marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
@@ -184,6 +192,10 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   yo: {
     appName: 'Qaraye Marchants',
+    harvestTitle: 'Harvest Season Price Trends',
+    harvestSubtitle: 'Average listing prices by category over the last 12 months.',
+    harvestNow: 'In season now:',
+    harvestEmpty: 'Not enough listings yet. Price trends will appear here as more products are added.',
     marqueeTitle: 'Fresh from the Farms',
     marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
@@ -269,6 +281,10 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   ig: {
     appName: 'Qaraye Marchants',
+    harvestTitle: 'Harvest Season Price Trends',
+    harvestSubtitle: 'Average listing prices by category over the last 12 months.',
+    harvestNow: 'In season now:',
+    harvestEmpty: 'Not enough listings yet. Price trends will appear here as more products are added.',
     marqueeTitle: 'Fresh from the Farms',
     marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
