@@ -1,0 +1,284 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+
+const { data: orders } = await supabase
+  .from('qm_orders')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(500);
+
+const rows = orders || [];
+---
+
+<Layout title="Orders Admin - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px;">
+    <div id="loading" style="text-align:center; padding: 80px 20px;">
+      <p style="color: var(--ink-muted); font-family: var(--mono); font-size: 13px;">Checking access…</p>
+    </div>
+    <div id="denied" style="display:none; text-align:center; padding: 80px 20px;">
+      <h1 style="font-family: var(--display); font-size: 2rem;">Access denied</h1>
+      <p style="color: var(--ink-muted);">This page is for administrators only.</p>
+      <a href="/login" class="btn btn-primary" style="margin-top: 16px;">Sign in</a>
+    </div>
+    <div id="admin-content" style="display:none;">
+      <div style="margin-bottom:24px;">
+        <h1 style="font-family: var(--display); font-size: 1.8rem; margin: 0 0 6px 0;">Orders</h1>
+        <p style="color: var(--ink-muted); margin: 0;">Manage customer order requests. Contact them to arrange payment and delivery.</p>
+      </div>
+      <div id="stats-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px;"></div>
+      <div id="filter-tabs" style="display:flex; gap:6px; margin-bottom:16px; background: var(--bg-850); padding: 4px; border-radius: var(--r-full); width: fit-content; flex-wrap: wrap;">
+        <button class="filter-tab active" data-status="all">All</button>
+        <button class="filter-tab" data-status="pending">Pending</button>
+        <button class="filter-tab" data-status="confirmed">Confirmed</button>
+        <button class="filter-tab" data-status="shipped">Shipped</button>
+        <button class="filter-tab" data-status="delivered">Delivered</button>
+        <button class="filter-tab" data-status="cancelled">Cancelled</button>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <input id="search-input" type="text" placeholder="Search by name, phone, or order #..." style="width: 100%; max-width: 400px; padding: 10px 14px; background: var(--bg-850); border: 1px solid var(--line-soft); border-radius: var(--r-sm); color: var(--ink); font-family: var(--body); font-size: 13.5px;" />
+      </div>
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px;">
+          <thead>
+            <tr style="background: var(--bg-850); text-align: left;">
+              <th style="padding: 10px 14px;">#</th>
+              <th style="padding: 10px 14px;">Date</th>
+              <th style="padding: 10px 14px;">Customer</th>
+              <th style="padding: 10px 14px;">Items</th>
+              <th style="padding: 10px 14px; text-align: right;">Total</th>
+              <th style="padding: 10px 14px;">Status</th>
+              <th style="padding: 10px 14px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+        <p id="empty-msg" style="text-align:center; padding: 40px; color: var(--ink-muted); display:none;">No orders yet.</p>
+      </div>
+    </div>
+  </div>
+  <div id="detail-modal" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.7); z-index: 999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 24px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h2 id="modal-title" style="font-family: var(--display); font-size: 1.3rem; margin: 0;">Order Details</h2>
+        <button id="close-modal" style="background:transparent; border:none; color: var(--ink-muted); font-size: 24px; cursor: pointer; padding: 0; line-height: 1;">×</button>
+      </div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+  <script type="application/json" id="orders-data" set:html={JSON.stringify(rows)} />
+  <script>
+    import { supabase } from '../../lib/supabase';
+
+    let orders: any[] = JSON.parse(document.getElementById('orders-data')?.textContent || '[]');
+    let currentFilter = 'all';
+    let searchTerm = '';
+
+    const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
+      pending:    { bg: 'rgba(245,158,11,0.15)',  fg: '#f59e0b' },
+      confirmed:  { bg: 'rgba(0,229,255,0.15)',   fg: '#00e5ff' },
+      shipped:    { bg: 'rgba(139,92,246,0.15)',  fg: '#8b5cf6' },
+      delivered:  { bg: 'rgba(16,217,130,0.15)',  fg: '#10d982' },
+      cancelled:  { bg: 'rgba(239,68,68,0.15)',   fg: '#ef4444' },
+    };
+
+    const loadingEl = document.getElementById('loading')!;
+    const deniedEl = document.getElementById('denied')!;
+    const contentEl = document.getElementById('admin-content')!;
+
+    async function getToken(): Promise<string> {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || '';
+    }
+
+    (async function checkAdmin() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { loadingEl.style.display = 'none'; deniedEl.style.display = 'block'; return; }
+        const { data: prof } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+        if (!prof?.is_admin) { loadingEl.style.display = 'none'; deniedEl.style.display = 'block'; return; }
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+        initUI();
+      } catch (err) {
+        console.error(err);
+        loadingEl.style.display = 'none';
+        deniedEl.style.display = 'block';
+      }
+    })();
+
+    function renderStats() {
+      const counts: Record<string, number> = {};
+      let revenue = 0;
+      orders.forEach(o => {
+        counts[o.status] = (counts[o.status] || 0) + 1;
+        if (o.status !== 'cancelled') revenue += Number(o.total);
+      });
+      const el = document.getElementById('stats-row')!;
+      el.innerHTML = `
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); padding: 14px 16px;">
+          <div style="font-family: var(--mono); font-size: 10.5px; color: var(--ink-muted); text-transform: uppercase;">Total Orders</div>
+          <div style="font-family: var(--display); font-size: 1.6rem; font-weight: 800; color: var(--ink); margin-top: 4px;">${orders.length}</div>
+        </div>
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); padding: 14px 16px;">
+          <div style="font-family: var(--mono); font-size: 10.5px; color: var(--ink-muted); text-transform: uppercase;">Pending</div>
+          <div style="font-family: var(--display); font-size: 1.6rem; font-weight: 800; color: #f59e0b; margin-top: 4px;">${counts['pending'] || 0}</div>
+        </div>
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-md); padding: 14px 16px;">
+          <div style="font-family: var(--mono); font-size: 10.5px; color: var(--ink-muted); text-transform: uppercase;">Revenue</div>
+          <div style="font-family: var(--display); font-size: 1.6rem; font-weight: 800; color: var(--cyan); margin-top: 4px;">₦${revenue.toLocaleString()}</div>
+        </div>
+      `;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('orders-body')!;
+      const emptyMsg = document.getElementById('empty-msg')!;
+      let filtered = currentFilter === 'all' ? orders : orders.filter(o => o.status === currentFilter);
+      if (searchTerm) {
+        const t = searchTerm.toLowerCase();
+        filtered = filtered.filter(o =>
+          String(o.id).includes(t) ||
+          (o.customer_name || '').toLowerCase().includes(t) ||
+          (o.customer_phone || '').toLowerCase().includes(t)
+        );
+      }
+      if (filtered.length === 0) {
+        emptyMsg.style.display = 'block';
+        emptyMsg.textContent = orders.length === 0 ? 'No orders yet.' : 'No orders match your filter.';
+      } else {
+        emptyMsg.style.display = 'none';
+      }
+      tbody.innerHTML = filtered.map((o: any) => {
+        const c = STATUS_COLORS[o.status] || STATUS_COLORS.pending;
+        const itemCount = Array.isArray(o.items) ? o.items.length : 0;
+        const date = new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+        return `
+        <tr data-id="${o.id}" style="border-top: 1px solid var(--line-soft); cursor: pointer;">
+          <td style="padding: 10px 14px; color: var(--cyan); font-weight: 700;">#${o.id}</td>
+          <td style="padding: 10px 14px; color: var(--ink-muted);">${date}</td>
+          <td style="padding: 10px 14px; color: var(--ink);">
+            <div>${o.customer_name}</div>
+            <div style="font-size: 10.5px; color: var(--ink-faint); margin-top: 2px;">${o.customer_phone}</div>
+          </td>
+          <td style="padding: 10px 14px; color: var(--ink-muted);">${itemCount} item${itemCount === 1 ? '' : 's'}</td>
+          <td style="padding: 10px 14px; text-align: right; color: var(--cyan); font-weight: 700;">₦${Number(o.total).toLocaleString()}</td>
+          <td style="padding: 10px 14px;"><span style="font-size: 10px; padding: 3px 10px; border-radius: 4px; background: ${c.bg}; color: ${c.fg}; font-weight: 700; text-transform: uppercase;">${o.status}</span></td>
+          <td style="padding: 10px 14px; text-align: right;">
+            <button data-view="${o.id}" style="background: transparent; border: 1px solid var(--line); color: var(--ink); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">View</button>
+          </td>
+        </tr>
+        `;
+      }).join('');
+    }
+
+    function showModal(id: number) {
+      const o = orders.find(x => String(x.id) === String(id));
+      if (!o) return;
+      const modal = document.getElementById('detail-modal')!;
+      const content = document.getElementById('modal-content')!;
+      document.getElementById('modal-title')!.textContent = `Order #${o.id}`;
+      const items = Array.isArray(o.items) ? o.items : [];
+      const itemsHtml = items.map((it: any) => `
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line-soft);">
+          <div>
+            <div style="font-family: var(--body); font-weight: 600; color: var(--ink); font-size: 13.5px;">${it.title}</div>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-top: 2px;">₦${Number(it.price).toLocaleString()} × ${it.qty} ${it.unit || ''}</div>
+          </div>
+          <div style="font-family: var(--display); font-weight: 700; color: var(--cyan);">₦${(Number(it.price) * Number(it.qty)).toLocaleString()}</div>
+        </div>
+      `).join('');
+      const statusOptions = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+      content.innerHTML = `
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 20px;">
+          ${new Date(o.created_at).toLocaleString('en-GB')}
+        </div>
+        <h3 style="font-family: var(--display); font-size: 1rem; margin: 16px 0 10px; color: var(--ink);">Customer</h3>
+        <div style="font-family: var(--body); font-size: 13.5px; color: var(--ink-muted); line-height: 1.7;">
+          <div><strong style="color: var(--ink);">Name:</strong> ${o.customer_name}</div>
+          <div><strong style="color: var(--ink);">Phone:</strong> <a href="tel:${o.customer_phone}" style="color: var(--cyan);">${o.customer_phone}</a></div>
+          ${o.customer_email ? `<div><strong style="color: var(--ink);">Email:</strong> <a href="mailto:${o.customer_email}" style="color: var(--cyan);">${o.customer_email}</a></div>` : ''}
+          ${o.delivery_location ? `<div><strong style="color: var(--ink);">Delivery:</strong> ${o.delivery_location}</div>` : ''}
+        </div>
+        <h3 style="font-family: var(--display); font-size: 1rem; margin: 20px 0 10px; color: var(--ink);">Items</h3>
+        <div>${itemsHtml}</div>
+        <div style="display:flex; justify-content:space-between; padding: 14px 0; font-family: var(--display); font-weight: 800; font-size: 1.1rem; border-top: 2px solid var(--line); margin-top: 8px;">
+          <span style="color: var(--ink);">Total</span>
+          <span style="color: var(--cyan);">₦${Number(o.total).toLocaleString()}</span>
+        </div>
+        ${o.notes ? `<h3 style="font-family: var(--display); font-size: 1rem; margin: 20px 0 10px; color: var(--ink);">Notes</h3><p style="font-family: var(--body); font-size: 13px; color: var(--ink-muted); line-height: 1.6; padding: 12px; background: var(--bg-850); border-radius: var(--r-sm);">${o.notes}</p>` : ''}
+        <h3 style="font-family: var(--display); font-size: 1rem; margin: 20px 0 10px; color: var(--ink);">Status</h3>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          ${statusOptions.map(s => `
+            <button data-setstatus="${s}" data-id="${o.id}" style="padding: 8px 14px; border-radius: var(--r-full); border: 1px solid ${o.status === s ? (STATUS_COLORS[s]?.fg || 'var(--cyan)') : 'var(--line-soft)'}; background: ${o.status === s ? (STATUS_COLORS[s]?.bg || 'transparent') : 'transparent'}; color: ${o.status === s ? (STATUS_COLORS[s]?.fg || 'var(--cyan)') : 'var(--ink-muted)'}; cursor: pointer; font-family: var(--mono); font-size: 11.5px; font-weight: 700; text-transform: uppercase;">
+              ${s}
+            </button>
+          `).join('')}
+        </div>
+      `;
+      modal.style.display = 'flex';
+    }
+
+    function initUI() {
+      renderStats();
+      renderTable();
+      document.querySelectorAll('.filter-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentFilter = (tab as HTMLElement).dataset.status || 'all';
+          renderTable();
+        });
+      });
+      document.getElementById('search-input')?.addEventListener('input', (e) => {
+        searchTerm = (e.target as HTMLInputElement).value.trim();
+        renderTable();
+      });
+      document.addEventListener('click', async (e) => {
+        const t = e.target as HTMLElement;
+        if ((t as any).dataset.view) { showModal((t as any).dataset.view); return; }
+        if ((t as any).dataset.setstatus) {
+          const id = (t as any).dataset.id;
+          const status = (t as any).dataset.setstatus;
+          const token = await getToken();
+          const res = await fetch('/api/orders/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ id, status }),
+          });
+          if (res.ok) {
+            const o = orders.find(x => String(x.id) === String(id));
+            if (o) o.status = status;
+            renderStats(); renderTable(); showModal(id);
+          } else {
+            alert('Failed: ' + await res.text());
+          }
+        }
+      });
+      document.getElementById('close-modal')?.addEventListener('click', () => {
+        (document.getElementById('detail-modal') as HTMLElement).style.display = 'none';
+      });
+      document.getElementById('detail-modal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('detail-modal')) {
+          (document.getElementById('detail-modal') as HTMLElement).style.display = 'none';
+        }
+      });
+    }
+  </script>
+  <style>
+    .filter-tab {
+      font-family: var(--body);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: var(--r-full);
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--ink-muted);
+      transition: 0.15s;
+    }
+    .filter-tab.active { background: var(--cyan); color: var(--bg-950); }
+    .filter-tab:not(.active):hover { color: var(--ink); }
+  </style>
+</Layout>
