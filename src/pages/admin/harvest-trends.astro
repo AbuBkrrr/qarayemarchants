@@ -2,7 +2,6 @@
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
 
-// Fetch all signals SERVER-SIDE (public data, no auth needed)
 const { data: signals } = await supabase
   .from('qm_price_signals')
   .select('*')
@@ -15,19 +14,16 @@ const rows = signals || [];
 <Layout title="Harvest Trends Admin - Qaraye Marchants">
   <div class="container" style="padding: 40px 24px;">
 
-    <!-- Loading state (visible until client check finishes) -->
     <div id="loading" style="text-align:center; padding: 80px 20px;">
       <p style="color: var(--ink-muted); font-family: var(--mono); font-size: 13px;">Checking access…</p>
     </div>
 
-    <!-- Access denied state -->
     <div id="denied" style="display:none; text-align:center; padding: 80px 20px;">
       <h1 style="font-family: var(--display); font-size: 2rem;">Access denied</h1>
       <p style="color: var(--ink-muted);">This page is for administrators only.</p>
       <a href="/login" class="btn btn-primary" style="margin-top: 16px;">Sign in</a>
     </div>
 
-    <!-- Admin content -->
     <div id="admin-content" style="display:none;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
         <div>
@@ -103,15 +99,19 @@ const rows = signals || [];
 
   </div>
 
-  <script is:inline define:vars={{ rows }}>
+  <!-- Data island: pass server-fetched rows to client JS -->
+  <script type="application/json" id="rows-data" set:html={JSON.stringify(rows)} />
+
+  <script>
     import { supabase } from '../../lib/supabase';
 
-    // --- CLIENT-SIDE ADMIN CHECK ---
-    (async function checkAdmin() {
-      const loadingEl = document.getElementById('loading');
-      const deniedEl = document.getElementById('denied');
-      const contentEl = document.getElementById('admin-content');
+    const rows = JSON.parse(document.getElementById('rows-data')?.textContent || '[]');
 
+    const loadingEl = document.getElementById('loading')!;
+    const deniedEl = document.getElementById('denied')!;
+    const contentEl = document.getElementById('admin-content')!;
+
+    (async function checkAdmin() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -131,26 +131,23 @@ const rows = signals || [];
           return;
         }
 
-        // ✅ Authorized — reveal content
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
         initAdminUI();
       } catch (err) {
+        console.error('Admin check error:', err);
         loadingEl.style.display = 'none';
         deniedEl.style.display = 'block';
-        console.error('Admin check error:', err);
       }
     })();
 
     function initAdminUI() {
-      const tbody = document.getElementById('signals-body');
-      const emptyMsg = document.getElementById('empty-msg');
+      const tbody = document.getElementById('signals-body')!;
+      const emptyMsg = document.getElementById('empty-msg')!;
 
-      if (rows.length === 0) {
-        emptyMsg.style.display = 'block';
-      }
+      if (rows.length === 0) emptyMsg.style.display = 'block';
 
-      tbody.innerHTML = rows.map(r => `
+      tbody.innerHTML = rows.map((r: any) => `
         <tr data-id="${r.id}" style="border-top: 1px solid var(--line-soft);">
           <td style="padding: 10px 14px; color: var(--ink-muted);">${r.recorded_at}</td>
           <td style="padding: 10px 14px; color: var(--ink);">${r.item_name}</td>
@@ -163,35 +160,35 @@ const rows = signals || [];
       `).join('');
 
       document.addEventListener('click', async (e) => {
-        const t = e.target;
-        if (t.dataset.del) {
+        const t = e.target as HTMLElement;
+        if ((t as any).dataset.del) {
           if (!confirm('Delete this signal?')) return;
           await fetch('/api/price-signals/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: t.dataset.del }),
+            body: JSON.stringify({ id: (t as any).dataset.del }),
           });
           location.reload();
         }
       });
 
       document.getElementById('add-btn')?.addEventListener('click', () => {
-        const f = document.getElementById('add-form');
+        const f = document.getElementById('add-form')!;
         f.style.display = f.style.display === 'none' ? 'block' : 'none';
-        document.getElementById('f-date').valueAsDate = new Date();
+        (document.getElementById('f-date') as HTMLInputElement).valueAsDate = new Date();
       });
       document.getElementById('cancel-btn')?.addEventListener('click', () => {
-        document.getElementById('add-form').style.display = 'none';
+        document.getElementById('add-form')!.style.display = 'none';
       });
 
       document.getElementById('save-btn')?.addEventListener('click', async () => {
         const payload = {
-          category: document.getElementById('f-category').value,
-          item_name: document.getElementById('f-item').value.trim(),
-          price: Number(document.getElementById('f-price').value),
-          unit: document.getElementById('f-unit').value,
-          recorded_at: document.getElementById('f-date').value,
-          source: document.getElementById('f-source').value,
+          category: (document.getElementById('f-category') as HTMLSelectElement).value,
+          item_name: (document.getElementById('f-item') as HTMLInputElement).value.trim(),
+          price: Number((document.getElementById('f-price') as HTMLInputElement).value),
+          unit: (document.getElementById('f-unit') as HTMLSelectElement).value,
+          recorded_at: (document.getElementById('f-date') as HTMLInputElement).value,
+          source: (document.getElementById('f-source') as HTMLSelectElement).value,
         };
         if (!payload.item_name || !payload.price || !payload.recorded_at) {
           alert('Please fill all fields');
