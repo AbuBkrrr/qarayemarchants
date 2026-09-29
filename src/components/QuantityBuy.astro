@@ -1,0 +1,119 @@
+---
+interface Props {
+  productId: string;
+  title: string;
+  price: number;
+  unit: string;
+  image?: string | null;
+}
+const { productId, title, price, unit, image = null } = Astro.props;
+---
+
+<div class="qty-buy" data-product-id={productId}
+     data-title={title}
+     data-price={price}
+     data-unit={unit}
+     data-image={image || ''}>
+  <div class="qty-picker">
+    <button type="button" class="qty-btn" data-qty-dec aria-label="Decrease">−</button>
+    <input type="number" class="qty-input" data-qty-input value="1" min="1" />
+    <button type="button" class="qty-btn" data-qty-inc aria-label="Increase">+</button>
+    <span class="qty-unit">× {unit}</span>
+  </div>
+  <button type="button" class="add-to-cart" data-add>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    </svg>
+    <span>Add to Cart</span>
+  </button>
+</div>
+
+<script>
+  import { addToCart } from '../scripts/cart';
+
+  document.querySelectorAll('.qty-buy').forEach((root) => {
+    const input = root.querySelector('[data-qty-input]') as HTMLInputElement;
+    const dec = root.querySelector('[data-qty-dec]');
+    const inc = root.querySelector('[data-qty-inc]');
+    const add = root.querySelector('[data-add]');
+    const data = (root as HTMLElement).dataset;
+
+    dec?.addEventListener('click', () => {
+      input.value = String(Math.max(1, Number(input.value) - 1));
+    });
+    inc?.addEventListener('click', () => {
+      input.value = String(Number(input.value) + 1);
+    });
+    input.addEventListener('input', () => {
+      input.value = String(Math.max(1, Number(input.value) || 1));
+    });
+
+    add?.addEventListener('click', () => {
+      addToCart({
+        id: data.productId!,
+        title: data.title!,
+        price: Number(data.price),
+        unit: data.unit!,
+        image: data.image || null,
+      }, Number(input.value));
+      const btn = add as HTMLElement;
+      const original = btn.innerHTML;
+      btn.innerHTML = '✓ Added to Cart';
+      btn.classList.add('added');
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.classList.remove('added');
+      }, 1500);
+    });
+  });
+</script>
+
+<style>
+  .qty-buy {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .qty-picker {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-850);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-full);
+    padding: 4px;
+    gap: 2px;
+  }
+  .qty-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; border: none; color: var(--cyan);
+    font-size: 18px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:hover { background: var(--cyan-soft); }
+  .qty-input {
+    width: 48px; background: transparent; border: none;
+    color: var(--ink); font-family: var(--mono); font-size: 14px;
+    font-weight: 700; text-align: center; outline: none;
+    -moz-appearance: textfield;
+  }
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .qty-unit {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-faint); padding-right: 10px;
+  }
+  .add-to-cart {
+    flex: 1; min-width: 160px;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: var(--bg-950); border: none; border-radius: var(--r-full);
+    padding: 12px 20px; font-family: var(--body); font-size: 14px;
+    font-weight: 700; cursor: pointer; transition: 0.15s;
+  }
+  .add-to-cart:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--cyan-soft); }
+  .add-to-cart.added { background: var(--green); }
+</style>

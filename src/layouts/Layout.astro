@@ -331,7 +331,11 @@ const year = new Date().getFullYear();
       </nav>
 
       <div class="gn-actions">
-        <button class="theme-btn" id="theme-btn" aria-label="Change theme">
+        <a href="/checkout" id="cart-link" class="theme-btn" style="position:relative;" aria-label="Cart">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+  <span id="cart-count" style="position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;font-size:9px;font-weight:700;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 4px;">0</span>
+</a>
+                    <button class="theme-btn" id="theme-btn" aria-label="Change theme">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
           <span id="theme-label">Theme</span>
         </button>
@@ -509,6 +513,18 @@ const year = new Date().getFullYear();
     updateAuthUI();
     supabase.auth.onAuthStateChange(() => updateAuthUI());
   </script>
-  <Analytics />
+  <script>
+  import { cartCount } from '../scripts/cart';
+  function updateCartBadge() {
+    const badge = document.getElementById('cart-count');
+    if (!badge) return;
+    const n = cartCount();
+    badge.textContent = String(n);
+    badge.style.display = n > 0 ? 'flex' : 'none';
+  }
+  updateCartBadge();
+  window.addEventListener('qm-cart-updated', updateCartBadge);
+</script>
+    <Analytics />
 </body>
 </html>

@@ -1,0 +1,164 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+
+const { data: { user } } = await supabase.auth.getUser();
+
+let profile: any = null;
+if (user) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('owner_name, business_name, phone, email')
+    .eq('id', user.id)
+    .single();
+  profile = data;
+}
+---
+
+<Layout title="Checkout - Qaraye Marchants">
+  <div class="container" style="padding: 40px 24px; max-width: 900px;">
+    <h1 style="font-family: var(--display); font-size: 1.8rem; margin: 0 0 6px 0;">Checkout</h1>
+    <p style="color: var(--ink-muted); margin: 0 0 32px 0;">Review your order and submit. Qaraye Marchants Admin will contact you to complete payment.</p>
+
+    <div id="empty-cart" style="display:none; text-align:center; padding: 60px 20px; background: var(--card-bg); border: 1px dashed var(--line); border-radius: var(--r-lg);">
+      <p style="color: var(--ink-muted); font-size: 1rem;">Your cart is empty.</p>
+      <a href="/products" class="btn btn-primary" style="margin-top: 12px;">Browse Marketplace</a>
+    </div>
+
+    <div id="checkout-content" style="display:none;">
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px; margin-bottom: 24px;">
+        <h2 style="font-family: var(--display); font-size: 1.15rem; margin: 0 0 16px 0;">Order Items</h2>
+        <div id="cart-items"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--line-soft);">
+          <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-muted);">TOTAL</span>
+          <span id="cart-total" style="font-family: var(--display); font-size: 1.4rem; font-weight: 800; color: var(--cyan);">₦0</span>
+        </div>
+      </div>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px; margin-bottom: 24px;">
+        <h2 style="font-family: var(--display); font-size: 1.15rem; margin: 0 0 16px 0;">Your Contact Details</h2>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">FULL NAME<br>
+            <input id="f-name" type="text" value={profile?.owner_name || ''} style="width:100%; padding:10px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">PHONE<br>
+            <input id="f-phone" type="tel" value={profile?.phone || ''} placeholder="+234..." style="width:100%; padding:10px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">EMAIL<br>
+            <input id="f-email" type="email" value={user?.email || ''} style="width:100%; padding:10px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+          <label style="font-family: var(--mono); font-size: 11px; color: var(--ink-muted);">DELIVERY LOCATION<br>
+            <input id="f-location" type="text" placeholder="City / State" style="width:100%; padding:10px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);" />
+          </label>
+        </div>
+        <label style="display:block; font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-top: 14px;">NOTES (optional)<br>
+          <textarea id="f-notes" rows="3" placeholder="Delivery instructions, preferred payment method..." style="width:100%; padding:10px; margin-top:4px; background: var(--bg-850); border:1px solid var(--line-soft); border-radius: 6px; color: var(--ink);"></textarea>
+        </label>
+      </div>
+
+      <button id="submit-btn" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 15px;">
+        Submit Order Request
+      </button>
+      <p style="font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-align: center; margin-top: 12px;">
+        Qaraye Marchants Admin will contact you within 24 hours to arrange payment and delivery.
+      </p>
+    </div>
+
+    <script>
+      import { getCart, cartTotal, updateQty, removeFromCart } from '../../scripts/cart';
+
+      const cartItemsEl = document.getElementById('cart-items')!;
+      const totalEl = document.getElementById('cart-total')!;
+      const contentEl = document.getElementById('checkout-content')!;
+      const emptyEl = document.getElementById('empty-cart')!;
+
+      function render() {
+        const cart = getCart();
+        if (cart.length === 0) {
+          contentEl.style.display = 'none';
+          emptyEl.style.display = 'block';
+          return;
+        }
+        emptyEl.style.display = 'none';
+        contentEl.style.display = 'block';
+
+        cartItemsEl.innerHTML = cart.map(item => `
+          <div style="display:flex; gap:14px; align-items:center; padding:12px 0; border-bottom:1px solid var(--line-soft);">
+            <div style="width:64px; height:64px; border-radius:8px; overflow:hidden; background:var(--bg-850); flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+              ${item.image ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="color:var(--ink-faint);font-size:22px;">📦</span>`}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:var(--body); font-weight:600; color:var(--ink); font-size:0.9rem;">${item.title}</div>
+              <div style="font-family:var(--mono); font-size:11px; color:var(--ink-muted); margin-top:2px;">₦${item.price.toLocaleString()} / ${item.unit}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button data-dec="${item.id}" style="width:28px;height:28px;border-radius:50%;background:transparent;border:1px solid var(--line-soft);color:var(--cyan);cursor:pointer;font-weight:700;">−</button>
+              <span style="font-family:var(--mono); min-width:32px; text-align:center; color:var(--ink);">${item.qty}</span>
+              <button data-inc="${item.id}" style="width:28px;height:28px;border-radius:50%;background:transparent;border:1px solid var(--line-soft);color:var(--cyan);cursor:pointer;font-weight:700;">+</button>
+            </div>
+            <div style="font-family:var(--display); font-weight:700; color:var(--cyan); min-width:90px; text-align:right;">₦${(item.qty * item.price).toLocaleString()}</div>
+            <button data-rm="${item.id}" style="background:transparent;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;" aria-label="Remove">×</button>
+          </div>
+        `).join('');
+
+        totalEl.textContent = '₦' + cartTotal().toLocaleString();
+      }
+
+      document.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement;
+        if ((t as any).dataset.dec) {
+          const id = (t as any).dataset.dec;
+          const item = getCart().find(c => c.id === id);
+          if (item) updateQty(id, item.qty - 1);
+          render();
+        } else if ((t as any).dataset.inc) {
+          const id = (t as any).dataset.inc;
+          const item = getCart().find(c => c.id === id);
+          if (item) updateQty(id, item.qty + 1);
+          render();
+        } else if ((t as any).dataset.rm) {
+          removeFromCart((t as any).dataset.rm);
+          render();
+        }
+      });
+
+      document.getElementById('submit-btn')?.addEventListener('click', async () => {
+        const cart = getCart();
+        if (cart.length === 0) return;
+        const name = (document.getElementById('f-name') as HTMLInputElement).value.trim();
+        const phone = (document.getElementById('f-phone') as HTMLInputElement).value.trim();
+        const email = (document.getElementById('f-email') as HTMLInputElement).value.trim();
+        const location = (document.getElementById('f-location') as HTMLInputElement).value.trim();
+        const notes = (document.getElementById('f-notes') as HTMLTextAreaElement).value.trim();
+        if (!name || !phone) { alert('Please enter your name and phone'); return; }
+
+        const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        try {
+          const res = await fetch('/api/orders/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cart, name, phone, email, location, notes }),
+          });
+          if (res.ok) {
+            localStorage.removeItem('qm-cart');
+            window.dispatchEvent(new CustomEvent('qm-cart-updated', { detail: [] }));
+            window.location.href = '/checkout/success';
+          } else {
+            alert('Failed: ' + await res.text());
+            btn.disabled = false;
+            btn.textContent = 'Submit Order Request';
+          }
+        } catch (err: any) {
+          alert('Network error: ' + err.message);
+          btn.disabled = false;
+          btn.textContent = 'Submit Order Request';
+        }
+      });
+
+      render();
+    </script>
+  </div>
+</Layout>
