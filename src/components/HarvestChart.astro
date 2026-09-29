@@ -66,6 +66,7 @@ const year = new Date().getFullYear();
 <script type="application/json" id="harvest-series-data" set:html={JSON.stringify(series)} />
 
 <script>
+  import Chart from 'chart.js/auto';
   const seriesEl = document.getElementById('harvest-series-data');
   const series = seriesEl ? JSON.parse(seriesEl.textContent || '[]') : [];
 
@@ -73,13 +74,7 @@ const year = new Date().getFullYear();
     const canvas = document.getElementById('harvestChart') as HTMLCanvasElement | null;
     if (!canvas) return;
 
-    // Wait for Chart.js (loaded globally in Layout)
-    if (typeof (window as any).Chart === 'undefined') {
-      console.log('[HarvestChart] Waiting for Chart.js...');
-      setTimeout(boot, 150);
-      return;
-    }
-    const Chart = (window as any).Chart;
+
 
     console.log('[HarvestChart] Rendering with', series.length, 'series');
 
