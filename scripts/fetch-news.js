@@ -179,12 +179,19 @@ async function main() {
   }
 
   // Use upsert to handle any remaining edge cases gracefully
-  const { error } = await supabase
-    .from('qm_news')
-    .upsert(newRows, { onConflict: 'slug', ignoreDuplicates: true });
+ const { data, error } = await supabase
+  .from('qm_news')
+  .upsert(rows, {
+    onConflict: 'slug',
+    ignoreDuplicates: true
+  });
 
-  if (error) {
-    console.error('Upsert failed:', error.message);
+if (error) {
+  console.error('Upsert failed:', error.message);
+  process.exit(1);
+}
+
+console.log(`✅ Upserted ${data?.length ?? 0} rows (duplicates skipped)`);
     // Do NOT exit(1) — allow the workflow to complete
   } else {
     console.log('Inserted', newRows.length, 'news items.');
