@@ -1,7 +1,6 @@
 ---
 import { supabase } from '../lib/supabase';
 
-// Fetch the last 180 days of approved signals
 const sixMonthsAgo = new Date();
 sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 180);
 
@@ -12,14 +11,12 @@ const { data: signals } = await supabase
   .gte('recorded_at', sixMonthsAgo.toISOString().slice(0, 10))
   .order('recorded_at', { ascending: true });
 
-// Group by item_name
 const byItem: Record<string, any[]> = {};
 (signals || []).forEach((s) => {
   if (!byItem[s.item_name]) byItem[s.item_name] = [];
   byItem[s.item_name].push(s);
 });
 
-// Build series with % change
 const series = Object.entries(byItem).map(([name, pts]) => {
   const first = Number(pts[0].price);
   const last = Number(pts[pts.length - 1].price);
@@ -33,13 +30,10 @@ const series = Object.entries(byItem).map(([name, pts]) => {
     last,
   };
 })
-// Sort by absolute % change (biggest movers first), take top 6
 .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
 .slice(0, 6);
 
 const hasData = series.length > 0;
-
-// Date range for title
 const fmt = (d: Date) => d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
 const startDate = hasData && signals && signals[0] ? fmt(new Date(signals[0].recorded_at)) : '';
 const endDate = hasData && signals && signals[signals.length - 1] ? fmt(new Date(signals[signals.length - 1].recorded_at)) : '';
@@ -63,31 +57,43 @@ const year = new Date().getFullYear();
     <>
       <div class="harvest-legend" id="harvestLegend"></div>
       <div class="harvest-chart-wrap">
-        <canvas id="harvestChart" height="110"></canvas>
+        <canvas id="harvestChart"></canvas>
       </div>
     </>
   )}
 </section>
 
-<script is:inline define:vars={{ series }}>
-  function boot() {
-    const canvas = document.getElementById('harvestChart');
-    if (!canvas || typeof Chart === 'undefined') { setTimeout(boot, 100); return; }
+<script type="application/json" id="harvest-series-data" set:html={JSON.stringify(series)} />
 
-    const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-    const ink = cssVar('--ink-muted') || '#8b95b8';
+<script>
+  const seriesEl = document.getElementById('harvest-series-data');
+  const series = seriesEl ? JSON.parse(seriesEl.textContent || '[]') : [];
+
+  function boot() {
+    const canvas = document.getElementById('harvestChart') as HTMLCanvasElement | null;
+    if (!canvas) return;
+
+    // Wait for Chart.js (loaded globally in Layout)
+    if (typeof (window as any).Chart === 'undefined') {
+      console.log('[HarvestChart] Waiting for Chart.js...');
+      setTimeout(boot, 150);
+      return;
+    }
+    const Chart = (window as any).Chart;
+
+    console.log('[HarvestChart] Rendering with', series.length, 'series');
+
+    const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
     const inkFaint = cssVar('--ink-faint') || '#5a6485';
     const grid = 'rgba(255,255,255,0.05)';
     const palette = ['#8b5cf6', '#10d982', '#00e5ff', '#f59e0b', '#ef4444', '#ec4899'];
 
-    // Build labels from unique dates
-    const allDates = new Set();
-    series.forEach(s => s.points.forEach(p => allDates.add(p.x)));
+    const allDates = new Set<string>();
+    series.forEach((s: any) => s.points.forEach((p: any) => allDates.add(p.x)));
     const labels = [...allDates].sort();
 
-    // Each series → look up y-value for each label (null if missing)
-    const datasets = series.map((s, i) => {
-      const map = new Map(s.points.map(p => [p.x, p.y]));
+    const datasets = series.map((s: any, i: number) => {
+      const map = new Map(s.points.map((p: any) => [p.x, p.y]));
       const data = labels.map(d => map.get(d) ?? null);
       return {
         label: `${s.name} (${s.changePct >= 0 ? '+' : ''}${s.changePct}%)`,
@@ -111,10 +117,10 @@ const year = new Date().getFullYear();
       data: { labels, datasets },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: false }, // we build our own legend
+          legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(10,15,29,0.95)',
             borderColor: 'rgba(0,229,255,0.2)',
@@ -122,10 +128,8 @@ const year = new Date().getFullYear();
             titleColor: '#f0f4ff',
             bodyColor: '#8b95b8',
             padding: 12,
-            titleFont: { family: 'JetBrains Mono', size: 11 },
-            bodyFont: { family: 'JetBrains Mono', size: 11 },
             callbacks: {
-              label: (c) => ` ${c.dataset.label.replace(/\s*\([+-]?\d+%\)$/, '')}: ₦${Number(c.raw).toLocaleString()}`,
+              label: (c: any) => ` ${c.dataset.label.replace(/\s*\([+-]?\d+%\)$/, '')}: ₦${Number(c.raw).toLocaleString()}`,
             },
           },
         },
@@ -139,7 +143,7 @@ const year = new Date().getFullYear();
             ticks: {
               color: inkFaint,
               font: { family: 'JetBrains Mono', size: 10 },
-              callback: (v) => v >= 1000 ? '₦' + (v/1000).toFixed(1) + 'k' : '₦' + v,
+              callback: (v: any) => v >= 1000 ? '₦' + (v/1000).toFixed(1) + 'k' : '₦' + v,
             },
             grid: { color: grid, drawTicks: false },
             border: { display: false },
@@ -148,10 +152,10 @@ const year = new Date().getFullYear();
       },
     });
 
-    // Custom legend with % change chips
+    // Custom legend
     const legendEl = document.getElementById('harvestLegend');
     if (legendEl) {
-      legendEl.innerHTML = series.map((s, i) => {
+      legendEl.innerHTML = series.map((s: any, i: number) => {
         const color = palette[i % palette.length];
         const arrow = s.changePct >= 0 ? '▲' : '▼';
         const cls = s.changePct >= 0 ? 'up' : 'down';
@@ -164,18 +168,14 @@ const year = new Date().getFullYear();
         `;
       }).join('');
     }
+
+    console.log('[HarvestChart] Done.');
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
-</script>
-
-<script is:inline>
-  if (!window.__qmChartJsLoaded) {
-    window.__qmChartJsLoaded = true;
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js';
-    document.head.appendChild(s);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
   }
 </script>
 
@@ -189,10 +189,7 @@ const year = new Date().getFullYear();
     border-radius: var(--r-lg);
     position: relative;
   }
-  .harvest-title-row {
-    text-align: center;
-    margin-bottom: 18px;
-  }
+  .harvest-title-row { text-align: center; margin-bottom: 18px; }
   .harvest-title {
     font-family: var(--display);
     font-size: 1.15rem;
@@ -225,29 +222,15 @@ const year = new Date().getFullYear();
     font-family: var(--mono);
     font-size: 11.5px;
   }
-  .hl-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .hl-name {
-    color: var(--ink);
-    font-weight: 500;
-  }
-  .hl-change {
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-size: 10.5px;
-  }
+  .hl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .hl-name { color: var(--ink); font-weight: 500; }
+  .hl-change { font-weight: 700; padding: 2px 7px; border-radius: 4px; font-size: 10.5px; }
   .hl-change.up   { color: #10d982; background: rgba(16,217,130,0.12); }
   .hl-change.down { color: #ef4444; background: rgba(239,68,68,0.12); }
-
   .harvest-chart-wrap {
     position: relative;
     width: 100%;
-    max-height: 340px;
+    height: 340px;
   }
   .harvest-empty {
     text-align: center;
@@ -270,5 +253,6 @@ const year = new Date().getFullYear();
     .harvest-section { padding: 16px; margin: 24px 16px; }
     .harvest-legend { gap: 10px 16px; }
     .hl-item { font-size: 10.5px; }
+    .harvest-chart-wrap { height: 260px; }
   }
 </style>
