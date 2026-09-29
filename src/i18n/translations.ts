@@ -14,6 +14,8 @@ export const languages: { code: LanguageCode; name: string; nativeName: string }
 export const translations: Record<LanguageCode, Record<string, string>> = {
   en: {
     appName: 'Qaraye Marchants',
+    marqueeTitle: 'Fresh from the Marketplace',
+    marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
     navHome: 'Home',
     navProducts: 'Products',
@@ -97,6 +99,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   ha: {
     appName: 'Qaraye Marchants',
+    marqueeTitle: 'Fresh from the Marketplace',
+    marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
     navHome: 'Home',
     navProducts: 'Products',
@@ -180,6 +184,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   yo: {
     appName: 'Qaraye Marchants',
+    marqueeTitle: 'Fresh from the Marketplace',
+    marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
     navHome: 'Home',
     navProducts: 'Products',
@@ -263,6 +269,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
   },
   ig: {
     appName: 'Qaraye Marchants',
+    marqueeTitle: 'Fresh from the Marketplace',
+    marqueeViewAll: 'View all →',
     // ---- Tier 1: Nav / Footer ----
     navHome: 'Home',
     navProducts: 'Products',

@@ -1,4 +1,5 @@
 ---
+import ProductMarquee from '../components/ProductMarquee.astro';
 import Layout from '../layouts/Layout.astro';
 import PostCard from '../components/PostCard.astro';
 import { supabase } from '../lib/supabase';
@@ -103,6 +104,7 @@ feed.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).
 ---
 
 <Layout title="Qaraye Marchants - The pulse of Nigerian finance">
+  <ProductMarquee />
   <div class="container" style="padding: 40px 24px;">
 
     <!-- Hero -->

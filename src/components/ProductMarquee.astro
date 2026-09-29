@@ -1,0 +1,178 @@
+---
+import { supabase } from '../lib/supabase';
+
+// Fetch the 12 newest active products
+const { data: products } = await supabase
+  .from('products')
+  .select('id, title, price, unit, category, media_urls, image_urls, location_state')
+  .eq('status', 'active')
+  .order('created_at', { ascending: false })
+  .limit(12);
+
+const items = products || [];
+// Duplicate the items so the loop is seamless (translateX(-50%) returns to start)
+const loopItems = [...items, ...items];
+---
+
+{items.length > 0 && (
+  <section class="product-marquee-section">
+    <div class="marquee-header">
+      <h2 data-i18n="marqueeTitle">Fresh from the Marketplace</h2>
+      <a href="/products" data-i18n="marqueeViewAll">View all →</a>
+    </div>
+    <div class="marquee-container">
+      <div class="marquee-track">
+        {loopItems.map((p) => {
+          const media = p.media_urls || p.image_urls || [];
+          const img = media[0] || null;
+          const isVideo = img && /\.(mp4|webm|mov)$/i.test(img);
+          return (
+            <a href={`/products/${p.id}`} class="marquee-card" aria-label={p.title}>
+              <div class="mc-thumb">
+                {img ? (
+                  isVideo ? (
+                    <video src={img} muted autoplay loop playsinline></video>
+                  ) : (
+                    <img src={img} alt={p.title} loading="lazy" />
+                  )
+                ) : (
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                )}
+              </div>
+              <div class="mc-body">
+                <div class="mc-title">{p.title}</div>
+                <div class="mc-price">
+                  &#8358;{Number(p.price).toLocaleString()}
+                  <span class="mc-unit">/ {p.unit}</span>
+                </div>
+                <div class="mc-loc">{p.location_state || 'Nigeria'}</div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .product-marquee-section {
+    margin: 48px 0 32px;
+  }
+  .marquee-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 auto 16px;
+    max-width: 1280px;
+    padding: 0 24px;
+  }
+  .marquee-header h2 {
+    font-family: var(--display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ink);
+  }
+  .marquee-header a {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    white-space: nowrap;
+  }
+  .marquee-container {
+    position: relative;
+    overflow: hidden;
+    padding: 8px 0 16px;
+    mask-image: linear-gradient(90deg, transparent 0, black 60px, black calc(100% - 60px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, black 60px, black calc(100% - 60px), transparent 100%);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 16px;
+    width: max-content;
+    animation: marquee-ltr 60s linear infinite;
+    will-change: transform;
+  }
+  /* Pause when hovering so users can click */
+  .marquee-container:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee-ltr {
+    0%   { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; transform: translateX(0); }
+  }
+
+  .marquee-card {
+    flex-shrink: 0;
+    width: 200px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .marquee-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cyan);
+    opacity: 1;
+  }
+  .mc-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--bg-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--ink-faint);
+  }
+  .mc-thumb img,
+  .mc-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mc-body {
+    padding: 10px 12px 12px;
+  }
+  .mc-title {
+    font-family: var(--body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.2em;
+  }
+  .mc-price {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--cyan);
+    margin-top: 6px;
+  }
+  .mc-unit {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  .mc-loc {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+</style>
